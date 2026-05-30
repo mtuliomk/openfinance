@@ -9,12 +9,22 @@ const worker: WorkerHandler = {
   async fetch(request, env) {
     const correlationId = buildCorrelationId();
     const parsedEnv = parseEnv(env);
+    const url = new URL(request.url);
+    const isGoogleAuthRoute =
+      url.pathname === '/auth/google/start' || url.pathname === '/auth/google/callback';
+    const isPublicAsset = url.pathname === '/favicon.ico';
+    const isPublicRoute = isGoogleAuthRoute || isPublicAsset;
+    const allowsMissingOrigin = isPublicRoute;
 
-    if (!isAllowedOrigin(request.headers.get('origin'), parsedEnv.PROXY_ALLOWED_ORIGINS)) {
+    const origin = request.headers.get('origin');
+    const isAllowed = origin
+      ? isAllowedOrigin(origin, parsedEnv.PROXY_ALLOWED_ORIGINS)
+      : allowsMissingOrigin;
+    if (!isAllowed) {
       return forbiddenResponse(correlationId, 'Origin not allowed');
     }
 
-    if (!validateBearerToken(request.headers.get('authorization'))) {
+    if (!isPublicRoute && !validateBearerToken(request.headers.get('authorization'))) {
       return unauthorizedResponse(correlationId);
     }
 

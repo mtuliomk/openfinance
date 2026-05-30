@@ -39,6 +39,9 @@ import { getBillById, listBill } from '../../modules/bill/bill.js';
 import { billIdSchema } from '../../modules/bill/bill.utils.js';
 import { writeServerJson } from '../shared/http-response.js';
 import { PluggyClient } from 'pluggy-sdk';
+import { validateProxySignature } from '../../modules/proxy-auth/proxy-auth.js';
+import { buildGoogleAuthorizeUrl, exchangeGoogleCode } from '../../modules/auth-google/auth-google.js';
+import { googleCallbackQuerySchema, googleStartQuerySchema } from '../../modules/auth-google/auth-google.utils.js';
 
 async function readRequestBody(request: RequestLike): Promise<unknown> {
   let body = '';
@@ -60,6 +63,29 @@ function createPluggyClient(): PluggyClient {
 
 const server = createServer(async (request, response) => {
   const url = new URL(request.url ?? '/', 'http://localhost');
+  const proxySecret = process.env.PROXY_SIGNING_SECRET;
+  const backendAudience = process.env.BACKEND_AUDIENCE ?? `http://localhost:${process.env.PORT ?? '3002'}`;
+  const isAuthRoute = url.pathname === '/auth/google/start' || url.pathname === '/auth/google/callback';
+  const isHealthRoute = url.pathname === '/health';
+
+  if (!isHealthRoute && !isAuthRoute) {
+    if (!proxySecret) {
+      writeServerJson(response, 500, { error: 'Proxy signing secret not configured' });
+      return;
+    }
+
+    const isValidProxyRequest = validateProxySignature(
+      Array.isArray(request.headers['x-proxy-auth'])
+        ? request.headers['x-proxy-auth'][0]
+        : request.headers['x-proxy-auth'],
+      proxySecret,
+      backendAudience
+    );
+    if (!isValidProxyRequest) {
+      writeServerJson(response, 401, { error: 'Invalid proxy authentication' });
+      return;
+    }
+  }
 
   if (request.method === 'GET' && url.pathname === '/health') {
     try {
@@ -67,6 +93,98 @@ const server = createServer(async (request, response) => {
       return;
     } catch {
       writeServerJson(response, 400, { error: 'Invalid request input' });
+      return;
+    }
+  }
+
+  if (request.method === 'GET' && url.pathname === '/auth/google/start') {
+    try {
+      const clientId = process.env.GOOGLE_CLIENT_ID;
+      const redirectUri = process.env.GOOGLE_REDIRECT_URI;
+      const frontendCallbackUrl = process.env.FRONTEND_CALLBACK_URL ?? 'http://localhost:3000/auth/callback';
+      if (!clientId || !redirectUri) {
+        writeServerJson(response, 500, { error: 'Google OAuth not configured' });
+        return;
+      }
+
+      const { returnTo } = googleStartQuerySchema.parse({
+        returnTo: url.searchParams.get('returnTo') ?? undefined
+      });
+      const { url: authorizeUrl, state } = buildGoogleAuthorizeUrl({
+        returnTo,
+        clientId,
+        redirectUri,
+        frontendCallbackUrl
+      });
+      response.setHeader(
+        'set-cookie',
+        `google_oauth_state=${state}; HttpOnly; Path=/; SameSite=Lax; Max-Age=600`
+      );
+      response.writeHead(302, { location: authorizeUrl });
+      response.end();
+      return;
+    } catch {
+      writeServerJson(response, 400, { error: 'Invalid request input' });
+      return;
+    }
+  }
+
+  if (request.method === 'GET' && url.pathname === '/auth/google/callback') {
+    try {
+      const clientId = process.env.GOOGLE_CLIENT_ID;
+      const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+      const redirectUri = process.env.GOOGLE_REDIRECT_URI;
+      if (!clientId || !clientSecret || !redirectUri) {
+        writeServerJson(response, 500, { error: 'Google OAuth not configured' });
+        return;
+      }
+
+      const parsed = googleCallbackQuerySchema.parse({
+        code: url.searchParams.get('code'),
+        state: url.searchParams.get('state')
+      });
+      const cookieHeader = request.headers.cookie ?? '';
+      const stateCookie = cookieHeader
+        .split(';')
+        .map((cookie) => cookie.trim())
+        .find((cookie) => cookie.startsWith('google_oauth_state='))
+        ?.split('=')[1];
+
+      let decodedState: { nonce: string; returnTo: string; frontendCallbackUrl: string } | null = null;
+      try {
+        decodedState = JSON.parse(Buffer.from(parsed.state, 'base64url').toString('utf-8')) as {
+          nonce: string;
+          returnTo: string;
+          frontendCallbackUrl: string;
+        };
+      } catch {
+        decodedState = null;
+      }
+
+      if (!stateCookie || !decodedState || stateCookie !== decodedState.nonce) {
+        writeServerJson(response, 401, { error: 'Invalid oauth state' });
+        return;
+      }
+
+      const user = await exchangeGoogleCode({
+        code: parsed.code,
+        state: parsed.state,
+        clientId,
+        clientSecret,
+        redirectUri
+      });
+
+      response.setHeader('set-cookie', [
+        'google_oauth_state=; HttpOnly; Path=/; SameSite=Lax; Max-Age=0',
+        `session_user=${Buffer.from(JSON.stringify(user)).toString('base64')}; HttpOnly; Path=/; SameSite=Lax; Max-Age=86400`
+      ]);
+      const callbackUrl = new URL(decodedState.returnTo, decodedState.frontendCallbackUrl);
+      callbackUrl.searchParams.set('success', '1');
+      response.writeHead(302, { location: callbackUrl.toString() });
+      response.end();
+      return;
+    } catch {
+      writeServerJson(response, 400, { error: 'Unable to authenticate with Google' });
       return;
     }
   }

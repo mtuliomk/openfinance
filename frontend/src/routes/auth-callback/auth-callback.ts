@@ -4,6 +4,12 @@ import type { AuthCallbackResult } from './auth-callback.types';
 
 export async function handleGoogleAuthCallback(search: string): Promise<AuthCallbackResult> {
   const params = getCallbackParams(search);
+  const callbackSuccess = params.get('success');
+
+  if (callbackSuccess === '1') {
+    return buildCallbackResult(true, null);
+  }
+
   const code = params.get('code');
   const state = params.get('state');
 

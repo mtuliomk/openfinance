@@ -17,7 +17,11 @@ export async function forwardRequest(request: Request, config: ForwardConfig): P
     init.body = request.body;
   }
 
-  const upstream = await fetch(forwardUrl, init);
+  const requestWithManualRedirect: RequestInit = {
+    ...init,
+    redirect: 'manual'
+  };
+  const upstream = await fetch(forwardUrl, requestWithManualRedirect);
 
   return new Response(upstream.body, {
     status: upstream.status,
