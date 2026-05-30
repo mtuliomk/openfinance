@@ -1,0 +1,76 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1780155672496,
+      "tag": "0000_oval_ultimatum",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1780156782803,
+      "tag": "0001_messy_vertigo",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1780158308752,
+      "tag": "0002_elite_retro_girl",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1780158708133,
+      "tag": "0003_lean_purple_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1780159310676,
+      "tag": "0004_absurd_energizer",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1780159951831,
+      "tag": "0005_icy_mandarin",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1780160520466,
+      "tag": "0006_first_krista_starr",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1780161341275,
+      "tag": "0007_medical_roughhouse",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1780161658719,
+      "tag": "0008_condemned_inertia",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1780161875826,
+      "tag": "0009_damp_major_mapleleaf",
+      "breakpoints": true
+    }
+  ]
+}

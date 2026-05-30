@@ -1,0 +1,21 @@
+CREATE TABLE `items` (
+	`id` text PRIMARY KEY NOT NULL,
+	`provider` text NOT NULL,
+	`connector` text DEFAULT 'null',
+	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	`updated_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	`status` text NOT NULL,
+	`execution_status` text NOT NULL,
+	`last_updated_at` text,
+	`webhook_url` text,
+	`error` text DEFAULT 'null',
+	`client_user_id` text NOT NULL,
+	`consecutive_failed_login_attempts` integer DEFAULT 0 NOT NULL,
+	`status_detail` text DEFAULT 'null',
+	`parameter` text DEFAULT 'null',
+	`user_action` text DEFAULT 'null',
+	`next_auto_sync_at` text,
+	`consent_expires_at` text,
+	`products` text DEFAULT '[]' NOT NULL,
+	`oauth_redirect_uri` text
+);
