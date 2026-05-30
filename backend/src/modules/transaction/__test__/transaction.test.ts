@@ -48,6 +48,7 @@ describe('transaction module', () => {
   const repository: TransactionRepository = {
     create: vi.fn(async () => transactionMock),
     list: vi.fn(async () => [transactionMock]),
+    existsByAccountId: vi.fn(async () => true),
     getById: vi.fn(async (id: string) => (id === transactionMock.id ? transactionMock : null)),
     updateById: vi.fn(async (id: string) => (id === transactionMock.id ? transactionMock : null)),
     deleteById: vi.fn(async (id: string) => id === transactionMock.id)

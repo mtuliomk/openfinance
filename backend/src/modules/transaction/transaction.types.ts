@@ -107,6 +107,7 @@ export interface TransactionUpdateInput {
 export interface TransactionRepository {
   create(input: TransactionCreateInput): Promise<TransactionRecord>;
   list(): Promise<TransactionRecord[]>;
+  existsByAccountId(accountId: string): Promise<boolean>;
   getById(id: string): Promise<TransactionRecord | null>;
   updateById(id: string, input: TransactionUpdateInput): Promise<TransactionRecord | null>;
   deleteById(id: string): Promise<boolean>;

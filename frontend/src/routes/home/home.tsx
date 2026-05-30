@@ -5,10 +5,13 @@ import { toCardsDashboardData } from '../../components/cards-dashboard/cards-das
 import { ConnectedAccountsDashboard } from '../../components/connected-accounts-dashboard/connected-accounts-dashboard';
 import type { ConnectedAccountsDashboardState } from '../../components/connected-accounts-dashboard/connected-accounts-dashboard.types';
 import { toConnectedAccountsDashboardData } from '../../components/connected-accounts-dashboard/connected-accounts-dashboard.utils';
+import { AccountsFeature } from '../../components/accounts-feature/accounts-feature';
+import type { AccountsFeatureState } from '../../components/accounts-feature/accounts-feature.types';
 import { InvestmentsDashboard } from '../../components/investments-dashboard/investments-dashboard';
 import type { InvestmentsDashboardState } from '../../components/investments-dashboard/investments-dashboard.types';
 import { toInvestmentsDashboardData } from '../../components/investments-dashboard/investments-dashboard.utils';
-import { listAccounts, listInvestments } from '../../services/proxy-api/proxy-api';
+import { listAccounts, listInvestments, listTransactions } from '../../services/proxy-api/proxy-api';
+import type { TransactionSummary } from '../../services/proxy-api/proxy-api.types';
 import { clearPersistedSession, getPersistedUserProfile } from '../../state/auth-session/auth-session';
 import { getFirstName } from '../../state/auth-session/auth-session.utils';
 import { HOME_FEATURES } from './home.types';
@@ -26,6 +29,11 @@ export function Home() {
     isLoading: true,
     hasError: false,
   });
+  const [accountsState, setAccountsState] = useState<AccountsFeatureState>({
+    accounts: [],
+    isLoading: true,
+    hasError: false,
+  });
   const [cardsDashboardState, setCardsDashboardState] = useState<CardsDashboardState>({
     data: toCardsDashboardData([]),
     isLoading: true,
@@ -36,6 +44,9 @@ export function Home() {
     isLoading: true,
     hasError: false,
   });
+  const [transactions, setTransactions] = useState<TransactionSummary[]>([]);
+  const [transactionsLoading, setTransactionsLoading] = useState(true);
+  const [transactionsError, setTransactionsError] = useState(false);
   const activeContent = featureContent[activeFeature];
   const userProfile = getPersistedUserProfile();
   const firstName = getFirstName(userProfile.displayName);
@@ -60,6 +71,11 @@ export function Home() {
           isLoading: false,
           hasError: false,
         });
+        setAccountsState({
+          accounts,
+          isLoading: false,
+          hasError: false,
+        });
       })
       .catch(() => {
         if (!isMounted) {
@@ -76,6 +92,38 @@ export function Home() {
           isLoading: false,
           hasError: true,
         }));
+        setAccountsState((current) => ({
+          accounts: current.accounts,
+          isLoading: false,
+          hasError: true,
+        }));
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    listTransactions()
+      .then((loadedTransactions) => {
+        if (!isMounted) {
+          return;
+        }
+
+        setTransactions(loadedTransactions);
+        setTransactionsLoading(false);
+        setTransactionsError(false);
+      })
+      .catch(() => {
+        if (!isMounted) {
+          return;
+        }
+
+        setTransactionsLoading(false);
+        setTransactionsError(true);
       });
 
     return () => {
@@ -179,6 +227,13 @@ export function Home() {
             <InvestmentsDashboard state={investmentsDashboardState} />
             <CardsDashboard state={cardsDashboardState} />
           </section>
+        ) : activeFeature === 'contas' ? (
+          <AccountsFeature
+            state={accountsState}
+            transactions={transactions}
+            transactionsLoading={transactionsLoading}
+            transactionsError={transactionsError}
+          />
         ) : (
           <>
             <h1>{activeContent.title}</h1>

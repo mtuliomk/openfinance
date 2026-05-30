@@ -31,7 +31,7 @@ export interface PluggyClientLike {
   fetchAccounts(itemId: string): Promise<{ results?: unknown[] }>;
   fetchTransactions(
     accountId: string,
-    options: { from: string; to: string }
+    options?: { from: string; to: string }
   ): Promise<{ results?: unknown[] }>;
   fetchInvestments(itemId: string): Promise<{ results?: unknown[] }>;
   fetchConsents(itemId: string): Promise<{ results?: unknown[] }>;

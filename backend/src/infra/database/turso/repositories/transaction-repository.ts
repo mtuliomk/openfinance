@@ -85,6 +85,11 @@ export const transactionRepository: TransactionRepository = {
     return records as TransactionRecord[];
   },
 
+  async existsByAccountId(accountId: string): Promise<boolean> {
+    const [record] = await db.select({ id: transactionTable.id }).from(transactionTable).where(eq(transactionTable.accountId, accountId)).limit(1);
+    return Boolean(record);
+  },
+
   async getById(id: string): Promise<TransactionRecord | null> {
     const [transaction] = await db.select().from(transactionTable).where(eq(transactionTable.id, id));
     return (transaction as TransactionRecord | undefined) ?? null;

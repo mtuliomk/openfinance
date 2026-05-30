@@ -96,8 +96,16 @@ describe('openfinance reload', () => {
             amount: 10,
             balance: 90,
             currencyCode: 'BRL',
+            paymentData: {
+              receiver: {
+                documentNumber: { value: '12345678901', type: 'CPF' },
+                routingNumber: '001',
+                branchNumber: '0001',
+                accountNumber: '41511630-9'
+              }
+            },
             categoryId: null,
-            operationType: null,
+            operationType: 'PIX',
             providerId: null,
             createdAt: new Date('2026-05-20T00:00:00.000Z'),
             updatedAt: new Date('2026-05-20T00:00:00.000Z')
@@ -169,6 +177,7 @@ describe('openfinance reload', () => {
         providerCode: input.providerCode ?? null
       })),
       list: vi.fn(),
+      existsByAccountId: vi.fn(async () => false),
       getById: vi.fn(),
       updateById: vi.fn(async () => null),
       deleteById: vi.fn()
@@ -249,6 +258,8 @@ describe('openfinance reload', () => {
       })
     );
     expect(accountRepository.create).toHaveBeenCalledTimes(1);
+    expect(transactionRepository.existsByAccountId).toHaveBeenCalledWith('acc-1');
+    expect(pluggyClient.fetchTransactions).toHaveBeenCalledWith('acc-1');
     expect(transactionRepository.create).toHaveBeenCalledTimes(1);
     expect(investmentRepository.create).toHaveBeenCalledTimes(1);
     expect(consentRepository.create).toHaveBeenCalledTimes(1);
@@ -268,5 +279,119 @@ describe('openfinance reload', () => {
       })
     );
     expect(logger.info).toHaveBeenCalledTimes(8);
+  });
+
+  it('loads only last 30 days when account already has transactions', async () => {
+    const items: ItemRecord[] = [
+      {
+        id: 'item-1',
+        provider: 'pluggy',
+        connector: null,
+        createdAt: '',
+        updatedAt: '',
+        status: '',
+        executionStatus: '',
+        lastUpdatedAt: null,
+        webhookUrl: null,
+        error: null,
+        clientUserId: 'user-1',
+        consecutiveFailedLoginAttempts: 0,
+        statusDetail: null,
+        parameter: null,
+        userAction: null,
+        nextAutoSyncAt: null,
+        consentExpiresAt: null,
+        products: [],
+        oauthRedirectUri: null
+      }
+    ];
+
+    const itemsRepository: ItemsRepository = {
+      list: vi.fn(async () => items),
+      getById: vi.fn(),
+      updateById: vi.fn(async () => items[0] ?? null)
+    };
+    const accountRepository: AccountRepository = {
+      create: vi.fn(async (input) => ({ ...input, subtype: null, number: null, name: null, marketingName: null, balance: null, taxNumber: null, owner: null, currencyCode: null, bankData: null, creditData: null })),
+      list: vi.fn(),
+      getById: vi.fn(),
+      updateById: vi.fn(async () => null),
+      deleteById: vi.fn()
+    };
+    const pluggyClient: PluggyClientLike = {
+      fetchItem: vi.fn(async () => ({ status: 'UPDATED', executionStatus: 'SUCCESS', products: ['ACCOUNTS'] })),
+      fetchAccounts: vi.fn(async () => ({ results: [{ id: 'acc-1', type: 'CHECKING', itemId: 'item-1' }] })),
+      fetchTransactions: vi.fn(async () => ({ results: [] })),
+      fetchInvestments: vi.fn(async () => ({ results: [] })),
+      fetchConsents: vi.fn(async () => ({ results: [] })),
+      fetchIdentityByItemId: vi.fn(async () => null),
+      fetchLoans: vi.fn(async () => ({ results: [] })),
+      fetchCreditCardBills: vi.fn(async () => ({ results: [] }))
+    };
+    const transactionRepository: TransactionRepository = {
+      create: vi.fn(),
+      list: vi.fn(async () => []),
+      existsByAccountId: vi.fn(async () => true),
+      getById: vi.fn(async () => null),
+      updateById: vi.fn(async () => null),
+      deleteById: vi.fn(async () => false)
+    };
+    const logger: ReloadLogger = { info: vi.fn() };
+    const investmentRepository: InvestmentRepository = {
+      create: vi.fn(),
+      list: vi.fn(async () => []),
+      getById: vi.fn(async () => null),
+      updateById: vi.fn(async () => null),
+      deleteById: vi.fn(async () => false)
+    };
+    const consentRepository: ConsentRepository = {
+      create: vi.fn(),
+      list: vi.fn(async () => []),
+      getById: vi.fn(async () => null),
+      updateById: vi.fn(async () => null),
+      deleteById: vi.fn(async () => false)
+    };
+    const identityRepository: IdentityRepository = {
+      create: vi.fn(),
+      list: vi.fn(async () => []),
+      getById: vi.fn(async () => null),
+      updateById: vi.fn(async () => null),
+      deleteById: vi.fn(async () => false)
+    };
+    const loanRepository: LoanRepository = {
+      create: vi.fn(),
+      list: vi.fn(async () => []),
+      getById: vi.fn(async () => null),
+      updateById: vi.fn(async () => null),
+      deleteById: vi.fn(async () => false)
+    };
+    const billRepository: BillRepository = {
+      create: vi.fn(),
+      list: vi.fn(async () => []),
+      getById: vi.fn(async () => null),
+      updateById: vi.fn(async () => null),
+      deleteById: vi.fn(async () => false)
+    };
+
+    await reloadOpenFinance({
+      itemsRepository,
+      accountRepository,
+      transactionRepository,
+      investmentRepository,
+      consentRepository,
+      identityRepository,
+      loanRepository,
+      billRepository,
+      pluggyClient,
+      logger
+    });
+
+    expect(pluggyClient.fetchTransactions).toHaveBeenCalledWith(
+      'acc-1',
+      expect.objectContaining({
+        from: expect.any(String),
+        to: expect.any(String)
+      })
+    );
   });
 });

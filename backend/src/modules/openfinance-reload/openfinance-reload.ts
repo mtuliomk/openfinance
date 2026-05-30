@@ -73,13 +73,13 @@ export async function reloadOpenFinance(dependencies: ReloadDependencies): Promi
       }
       accountsSaved += 1;
 
-      const now = new Date();
-      const from = new Date(now);
-      from.setDate(now.getDate() - 30);
-      const transactionsResponse = await pluggyClient.fetchTransactions(input.id, {
-        from: from.toISOString(),
-        to: now.toISOString()
-      });
+      const hasExistingTransactions = await transactionRepository.existsByAccountId(input.id);
+      const transactionsResponse = hasExistingTransactions
+        ? await pluggyClient.fetchTransactions(input.id, {
+            from: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+            to: new Date().toISOString()
+          })
+        : await pluggyClient.fetchTransactions(input.id);
       const rawTransactions = Array.isArray(transactionsResponse.results)
         ? transactionsResponse.results
         : [];
