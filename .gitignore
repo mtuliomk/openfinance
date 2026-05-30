@@ -53,3 +53,5 @@ yarn-error.log*
 # misc
 .DS_Store
 *.pem
+
+frontend/cliet-secret.json
