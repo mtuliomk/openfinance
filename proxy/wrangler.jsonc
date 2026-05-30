@@ -1,0 +1,10 @@
+{
+  "name": "openfinance-proxy",
+  "main": "src/app/worker.ts",
+  "compatibility_date": "2026-05-30",
+  "vars": {
+    "BACKEND_BASE_URL": "http://localhost:3001",
+    "PROXY_SIGNING_SECRET": "dev-secret",
+    "PROXY_ALLOWED_ORIGINS": "http://localhost:3000"
+  }
+}
