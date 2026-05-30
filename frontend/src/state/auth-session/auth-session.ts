@@ -1,4 +1,4 @@
-import { getAuthStorageKey, initialAuthSessionState, toPersistedAuthSession } from './auth-session.utils';
+import { getAuthStorageKey, initialAuthSessionState, isValidAvatarUrl, toPersistedAuthSession } from './auth-session.utils';
 import type { AuthSessionState, PersistedAuthSession } from './auth-session.types';
 
 export function getInitialAuthSessionState(): AuthSessionState {
@@ -11,8 +11,19 @@ export function getInitialAuthSessionState(): AuthSessionState {
   return initialAuthSessionState;
 }
 
-export function persistAuthenticatedSession(): void {
-  window.localStorage.setItem(getAuthStorageKey(), JSON.stringify(toPersistedAuthSession(true)));
+export function persistAuthenticatedSession(displayName: string | null, avatarUrl: string | null): void {
+  window.localStorage.setItem(
+    getAuthStorageKey(),
+    JSON.stringify(toPersistedAuthSession(true, displayName, avatarUrl)),
+  );
+}
+
+export function getPersistedUserProfile(): { displayName: string | null; avatarUrl: string | null } {
+  const persistedSession = readPersistedAuthSession();
+  return {
+    displayName: persistedSession?.displayName ?? null,
+    avatarUrl: persistedSession?.avatarUrl ?? null,
+  };
 }
 
 export function clearPersistedSession(): void {
@@ -33,7 +44,18 @@ function readPersistedAuthSession(): PersistedAuthSession | null {
       return null;
     }
 
-    return parsedValue;
+    if (parsedValue.displayName !== null && typeof parsedValue.displayName !== 'string') {
+      return null;
+    }
+
+    if (parsedValue.avatarUrl !== null && typeof parsedValue.avatarUrl !== 'string') {
+      return null;
+    }
+
+    return {
+      ...parsedValue,
+      avatarUrl: isValidAvatarUrl(parsedValue.avatarUrl) ? parsedValue.avatarUrl : null,
+    };
   } catch {
     return null;
   }

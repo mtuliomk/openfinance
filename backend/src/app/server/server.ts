@@ -37,11 +37,32 @@ import { loanIdSchema } from '../../modules/loan/loan.utils.js';
 import { billRepository } from '../../infra/database/turso/repositories/bill-repository.js';
 import { getBillById, listBill } from '../../modules/bill/bill.js';
 import { billIdSchema } from '../../modules/bill/bill.utils.js';
-import { writeServerJson } from '../shared/http-response.js';
+import { getResponseLogBody, writeServerJson } from '../shared/http-response.js';
 import { PluggyClient } from 'pluggy-sdk';
 import { validateProxySignature } from '../../modules/proxy-auth/proxy-auth.js';
 import { buildGoogleAuthorizeUrl, exchangeGoogleCode } from '../../modules/auth-google/auth-google.js';
 import { googleCallbackQuerySchema, googleStartQuerySchema } from '../../modules/auth-google/auth-google.utils.js';
+
+const REDACTED_HEADERS = new Set(['authorization', 'cookie', 'set-cookie', 'x-proxy-auth']);
+
+function sanitizeHeaders(headers: Record<string, string | string[] | undefined>): Record<string, string> {
+  const sanitized: Record<string, string> = {};
+
+  for (const [key, value] of Object.entries(headers)) {
+    if (value === undefined) {
+      continue;
+    }
+
+    if (REDACTED_HEADERS.has(key.toLowerCase())) {
+      sanitized[key] = '[REDACTED]';
+      continue;
+    }
+
+    sanitized[key] = Array.isArray(value) ? value.join(',') : value;
+  }
+
+  return sanitized;
+}
 
 async function readRequestBody(request: RequestLike): Promise<unknown> {
   let body = '';
@@ -62,7 +83,54 @@ function createPluggyClient(): PluggyClient {
 }
 
 const server = createServer(async (request, response) => {
+  const startedAtMs = Date.now();
+  const requestId = crypto.randomUUID();
+  const method = request.method ?? 'UNKNOWN';
   const url = new URL(request.url ?? '/', 'http://localhost');
+  const requestPath = `${url.pathname}${url.search}`;
+  const correlationIdHeader = request.headers['x-correlation-id'];
+  const correlationId = Array.isArray(correlationIdHeader) ? correlationIdHeader[0] : correlationIdHeader;
+  response.setHeader('x-request-id', requestId);
+  response.on('finish', () => {
+    const durationMs = Date.now() - startedAtMs;
+    const responseHeaders = response.getHeaders();
+    const sanitizedResponseHeaders: Record<string, string> = {};
+    for (const [key, value] of Object.entries(responseHeaders)) {
+      if (value === undefined) {
+        continue;
+      }
+
+      if (REDACTED_HEADERS.has(key.toLowerCase())) {
+        sanitizedResponseHeaders[key] = '[REDACTED]';
+        continue;
+      }
+
+      sanitizedResponseHeaders[key] = Array.isArray(value)
+        ? value.map((item) => String(item)).join(',')
+        : String(value);
+    }
+
+    console.info('access_log', {
+      requestId,
+      correlationId: correlationId ?? null,
+      request: {
+        method,
+        path: requestPath,
+        query: Object.fromEntries(url.searchParams.entries()),
+        headers: sanitizeHeaders(request.headers),
+        bodyBytes: Number(request.headers['content-length'] ?? 0)
+      },
+      response: {
+        statusCode: response.statusCode,
+        headers: sanitizedResponseHeaders,
+        bodyBytes: Number(response.getHeader('content-length') ?? 0),
+        body: getResponseLogBody(response) ?? null
+      },
+      durationMs,
+      timestamp: new Date().toISOString()
+    });
+  });
+
   const proxySecret = process.env.PROXY_SIGNING_SECRET;
   const backendAudience = process.env.BACKEND_AUDIENCE ?? `http://localhost:${process.env.PORT ?? '3002'}`;
   const isAuthRoute = url.pathname === '/auth/google/start' || url.pathname === '/auth/google/callback';
@@ -180,6 +248,8 @@ const server = createServer(async (request, response) => {
       ]);
       const callbackUrl = new URL(decodedState.returnTo, decodedState.frontendCallbackUrl);
       callbackUrl.searchParams.set('success', '1');
+      callbackUrl.searchParams.set('name', user.name);
+      callbackUrl.searchParams.set('avatar', user.picture);
       response.writeHead(302, { location: callbackUrl.toString() });
       response.end();
       return;

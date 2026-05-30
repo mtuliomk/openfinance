@@ -16,5 +16,6 @@ export interface GoogleCallbackInput {
 export interface GoogleUserProfile {
   email: string;
   name: string;
+  picture: string;
   sub: string;
 }

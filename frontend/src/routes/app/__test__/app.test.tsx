@@ -30,12 +30,12 @@ describe('App', () => {
   });
 
   it('mantem /home apos refresh quando sessao estiver persistida', () => {
-    window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({ isAuthenticated: true }));
+    window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({ isAuthenticated: true, displayName: 'Marco', avatarUrl: null }));
     window.history.replaceState({}, '', '/home');
 
     render(<App />);
 
     expect(window.location.pathname).toBe('/home');
-    expect(screen.getByText('Bem-vindo')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Contas' })).toBeInTheDocument();
   });
 });

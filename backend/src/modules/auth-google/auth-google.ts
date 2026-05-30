@@ -57,6 +57,7 @@ export async function exchangeGoogleCode(input: GoogleCallbackInput): Promise<Go
   return {
     email: verifyData.email ?? '',
     name: verifyData.name ?? '',
+    picture: verifyData.picture ?? '',
     sub: verifyData.sub ?? ''
   };
 }

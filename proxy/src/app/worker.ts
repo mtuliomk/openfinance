@@ -20,12 +20,21 @@ const worker: WorkerHandler = {
     const isAllowed = origin
       ? isAllowedOrigin(origin, parsedEnv.PROXY_ALLOWED_ORIGINS)
       : allowsMissingOrigin;
+
+    if (request.method === 'OPTIONS') {
+      if (!isAllowed) {
+        return withCors(forbiddenResponse(correlationId, 'Origin not allowed'), origin);
+      }
+
+      return withCors(new Response(null, { status: 204 }), origin);
+    }
+
     if (!isAllowed) {
-      return forbiddenResponse(correlationId, 'Origin not allowed');
+      return withCors(forbiddenResponse(correlationId, 'Origin not allowed'), origin);
     }
 
     if (!isPublicRoute && !validateBearerToken(request.headers.get('authorization'))) {
-      return unauthorizedResponse(correlationId);
+      return withCors(unauthorizedResponse(correlationId), origin);
     }
 
     try {
@@ -34,15 +43,33 @@ const worker: WorkerHandler = {
         parsedEnv.BACKEND_BASE_URL
       );
 
-      return await forwardRequest(request, {
+      const upstream = await forwardRequest(request, {
         backendBaseUrl: parsedEnv.BACKEND_BASE_URL,
         internalAuthHeader,
         correlationId
       });
+      return withCors(upstream, origin);
     } catch {
-      return badGatewayResponse(correlationId);
+      return withCors(badGatewayResponse(correlationId), origin);
     }
   }
 };
 
 export default worker;
+
+function withCors(response: Response, origin: string | null): Response {
+  const headers = new Headers(response.headers);
+  headers.set('access-control-allow-methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+  headers.set('access-control-allow-headers', 'authorization,content-type');
+  headers.set('access-control-max-age', '86400');
+  if (origin) {
+    headers.set('access-control-allow-origin', origin);
+    headers.append('vary', 'origin');
+  }
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers
+  });
+}

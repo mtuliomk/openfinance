@@ -4,6 +4,11 @@ export function getCallbackParams(search: string): URLSearchParams {
   return new URLSearchParams(search);
 }
 
-export function buildCallbackResult(success: boolean, errorMessage: string | null): AuthCallbackResult {
-  return { success, errorMessage };
+export function buildCallbackResult(
+  success: boolean,
+  errorMessage: string | null,
+  displayName: string | null,
+  avatarUrl: string | null,
+): AuthCallbackResult {
+  return { success, errorMessage, displayName, avatarUrl };
 }

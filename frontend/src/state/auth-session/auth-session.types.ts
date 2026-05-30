@@ -7,4 +7,6 @@ export const AUTH_SESSION_STORAGE_KEY = 'openfinance.auth.session';
 
 export interface PersistedAuthSession {
   isAuthenticated: boolean;
+  displayName: string | null;
+  avatarUrl: string | null;
 }

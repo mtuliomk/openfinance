@@ -22,35 +22,47 @@ function isAuthCallbackRoute(pathname: string): boolean {
 
 export function App() {
   const [authState, setAuthState] = useState<AuthSessionState>(getInitialAuthSessionState());
+  const [currentPath, setCurrentPath] = useState<string>(window.location.pathname);
 
   useEffect(() => {
-    if (!isAuthCallbackRoute(window.location.pathname)) {
+    function handleRouteChange() {
+      setCurrentPath(window.location.pathname);
+    }
+
+    window.addEventListener('popstate', handleRouteChange);
+    return () => window.removeEventListener('popstate', handleRouteChange);
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthCallbackRoute(currentPath)) {
       return;
     }
 
     handleGoogleAuthCallback(window.location.search).then((result) => {
       if (result.success) {
-        persistAuthenticatedSession();
+        persistAuthenticatedSession(result.displayName, result.avatarUrl);
         setAuthState({ status: 'authenticated', errorMessage: null });
         window.history.replaceState({}, '', '/home');
+        setCurrentPath('/home');
         return;
       }
 
       clearPersistedSession();
       setAuthState({ status: 'error', errorMessage: result.errorMessage });
     });
-  }, []);
+  }, [currentPath]);
 
   useEffect(() => {
-    if (!isHomeRoute(window.location.pathname)) {
+    if (!isHomeRoute(currentPath)) {
       return;
     }
 
     if (authState.status !== 'authenticated') {
       clearPersistedSession();
       window.history.replaceState({}, '', '/');
+      window.dispatchEvent(new PopStateEvent('popstate'));
     }
-  }, [authState]);
+  }, [authState, currentPath]);
 
   const description = useMemo(() => {
     if (authState.status === 'authenticated') {
@@ -68,7 +80,7 @@ export function App() {
     window.location.assign(getGoogleAuthStartUrl({ returnTo: '/auth/callback' }));
   }
 
-  if (isHomeRoute(window.location.pathname)) {
+  if (isHomeRoute(currentPath)) {
     if (authState.status === 'authenticated') {
       return <Home />;
     }

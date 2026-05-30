@@ -15120,28 +15120,51 @@ var worker = {
     const allowsMissingOrigin = isPublicRoute;
     const origin = request.headers.get("origin");
     const isAllowed = origin ? isAllowedOrigin(origin, parsedEnv.PROXY_ALLOWED_ORIGINS) : allowsMissingOrigin;
+    if (request.method === "OPTIONS") {
+      if (!isAllowed) {
+        return withCors(forbiddenResponse(correlationId, "Origin not allowed"), origin);
+      }
+      return withCors(new Response(null, { status: 204 }), origin);
+    }
     if (!isAllowed) {
-      return forbiddenResponse(correlationId, "Origin not allowed");
+      return withCors(forbiddenResponse(correlationId, "Origin not allowed"), origin);
     }
     if (!isPublicRoute && !validateBearerToken(request.headers.get("authorization"))) {
-      return unauthorizedResponse(correlationId);
+      return withCors(unauthorizedResponse(correlationId), origin);
     }
     try {
       const internalAuthHeader = await buildInternalAuthHeader(
         parsedEnv.PROXY_SIGNING_SECRET,
         parsedEnv.BACKEND_BASE_URL
       );
-      return await forwardRequest(request, {
+      const upstream = await forwardRequest(request, {
         backendBaseUrl: parsedEnv.BACKEND_BASE_URL,
         internalAuthHeader,
         correlationId
       });
+      return withCors(upstream, origin);
     } catch {
-      return badGatewayResponse(correlationId);
+      return withCors(badGatewayResponse(correlationId), origin);
     }
   }
 };
 var worker_default = worker;
+function withCors(response, origin) {
+  const headers = new Headers(response.headers);
+  headers.set("access-control-allow-methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
+  headers.set("access-control-allow-headers", "authorization,content-type");
+  headers.set("access-control-max-age", "86400");
+  if (origin) {
+    headers.set("access-control-allow-origin", origin);
+    headers.append("vary", "origin");
+  }
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers
+  });
+}
+__name(withCors, "withCors");
 
 // node_modules/wrangler/templates/middleware/middleware-ensure-req-body-drained.ts
 var drainBody = /* @__PURE__ */ __name(async (request, env, _ctx, middlewareCtx) => {
@@ -15184,7 +15207,7 @@ var jsonError = /* @__PURE__ */ __name(async (request, env, _ctx, middlewareCtx)
 }, "jsonError");
 var middleware_miniflare3_json_error_default = jsonError;
 
-// .wrangler/tmp/bundle-UYq0HG/middleware-insertion-facade.js
+// .wrangler/tmp/bundle-SKsYvc/middleware-insertion-facade.js
 var __INTERNAL_WRANGLER_MIDDLEWARE__ = [
   middleware_ensure_req_body_drained_default,
   middleware_miniflare3_json_error_default
@@ -15216,7 +15239,7 @@ function __facade_invoke__(request, env, ctx, dispatch, finalMiddleware) {
 }
 __name(__facade_invoke__, "__facade_invoke__");
 
-// .wrangler/tmp/bundle-UYq0HG/middleware-loader.entry.ts
+// .wrangler/tmp/bundle-SKsYvc/middleware-loader.entry.ts
 var __Facade_ScheduledController__ = class ___Facade_ScheduledController__ {
   constructor(scheduledTime, cron, noRetry) {
     this.scheduledTime = scheduledTime;
