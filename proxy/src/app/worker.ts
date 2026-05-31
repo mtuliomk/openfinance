@@ -53,7 +53,11 @@ const worker: WorkerHandler = {
       if (!upstreamUrl && !isPublicAsset) {
         return withCors(notFoundResponse(correlationId), origin);
       }
-      const internalAuthHeader = await buildInternalAuthHeader(parsedEnv.PROXY_SIGNING_SECRET, upstreamUrl!);
+      const backendAudience = new URL(upstreamUrl!).origin;
+      const internalAuthHeader = await buildInternalAuthHeader(
+        parsedEnv.PROXY_SIGNING_SECRET,
+        backendAudience
+      );
 
       const upstream = await forwardRequest(request, {
         upstreamUrl: upstreamUrl ?? request.url,

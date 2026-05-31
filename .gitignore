@@ -31,6 +31,7 @@
 
 # caches
 **/.cache/
+**/.wrangler/
 
 # logs
 npm-debug.log*
