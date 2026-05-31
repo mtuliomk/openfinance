@@ -168,6 +168,9 @@ export async function listTransactions(): Promise<TransactionSummary[]> {
       type?: unknown;
       operationType?: unknown;
       paymentData?: unknown;
+      merchant?: unknown;
+      creditCardMetadata?: unknown;
+      credit_card_metadata?: unknown;
     };
 
     if (
@@ -190,10 +193,50 @@ export async function listTransactions(): Promise<TransactionSummary[]> {
         category: typeof candidate.category === 'string' ? candidate.category : null,
         type: typeof candidate.type === 'string' ? candidate.type : null,
         operationType: typeof candidate.operationType === 'string' ? candidate.operationType : null,
+        merchant: mapTransactionMerchant(candidate.merchant),
+        credit_card_metadata: mapCreditCardMetadata(candidate.creditCardMetadata, candidate.credit_card_metadata),
         paymentData: mapTransactionPaymentData(candidate.paymentData),
       },
     ];
   });
+}
+
+function mapTransactionMerchant(merchant: unknown): TransactionSummary['merchant'] {
+  if (!merchant || typeof merchant !== 'object') {
+    return null;
+  }
+
+  const merchantData = merchant as { name?: unknown; businessName?: unknown; cnpj?: unknown };
+
+  return {
+    name: typeof merchantData.name === 'string' ? merchantData.name : null,
+    businessName: typeof merchantData.businessName === 'string' ? merchantData.businessName : null,
+    cnpj: typeof merchantData.cnpj === 'string' ? merchantData.cnpj : null,
+  };
+}
+
+function mapCreditCardMetadata(
+  creditCardMetadataCamelCase: unknown,
+  creditCardMetadataSnakeCase: unknown,
+): TransactionSummary['credit_card_metadata'] {
+  const source =
+    creditCardMetadataCamelCase && typeof creditCardMetadataCamelCase === 'object'
+      ? creditCardMetadataCamelCase
+      : creditCardMetadataSnakeCase && typeof creditCardMetadataSnakeCase === 'object'
+        ? creditCardMetadataSnakeCase
+        : null;
+
+  if (!source) {
+    return null;
+  }
+
+  const metadata = source as { billId?: unknown; installmentNumber?: unknown; totalInstallments?: unknown };
+
+  return {
+    billId: typeof metadata.billId === 'string' ? metadata.billId : null,
+    installmentNumber: typeof metadata.installmentNumber === 'number' ? metadata.installmentNumber : null,
+    totalInstallments: typeof metadata.totalInstallments === 'number' ? metadata.totalInstallments : null,
+  };
 }
 
 export async function reloadOpenFinance(): Promise<OpenFinanceReloadResult> {

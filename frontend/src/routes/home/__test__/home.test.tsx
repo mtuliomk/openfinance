@@ -85,6 +85,9 @@ describe('Home', () => {
     expect(screen.getByRole('heading', { name: 'Investimentos' })).toBeInTheDocument();
     expect(screen.getByText('Posição consolidada')).toBeInTheDocument();
 
+    fireEvent.click(screen.getByRole('button', { name: 'cartões' }));
+    expect(screen.getByText('Selecione um cartão para visualizar as transações.')).toBeInTheDocument();
+
     fireEvent.click(screen.getByRole('button', { name: 'atualizar' }));
     expect(screen.getByRole('heading', { name: 'Atualizar' })).toBeInTheDocument();
     expect(screen.getByText('Sincronização Open Finance')).toBeInTheDocument();

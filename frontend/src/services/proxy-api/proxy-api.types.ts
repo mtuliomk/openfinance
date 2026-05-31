@@ -35,6 +35,16 @@ export interface TransactionSummary {
   category: string | null;
   type: string | null;
   operationType: string | null;
+  merchant?: {
+    name?: string | null;
+    businessName?: string | null;
+    cnpj?: string | null;
+  } | null;
+  credit_card_metadata?: {
+    billId?: string | null;
+    installmentNumber?: number | null;
+    totalInstallments?: number | null;
+  } | null;
   paymentData: {
     payer: {
       documentNumber: {

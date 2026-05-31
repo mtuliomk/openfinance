@@ -7,6 +7,8 @@ import type { ConnectedAccountsDashboardState } from '../../components/connected
 import { toConnectedAccountsDashboardData } from '../../components/connected-accounts-dashboard/connected-accounts-dashboard.utils';
 import { AccountsFeature } from '../../components/accounts-feature/accounts-feature';
 import type { AccountsFeatureState } from '../../components/accounts-feature/accounts-feature.types';
+import { CardsFeature } from '../../components/cards-feature/cards-feature';
+import type { CardsFeatureState } from '../../components/cards-feature/cards-feature.types';
 import { InvestmentsDashboard } from '../../components/investments-dashboard/investments-dashboard';
 import type { InvestmentsDashboardState } from '../../components/investments-dashboard/investments-dashboard.types';
 import { toInvestmentsDashboardData } from '../../components/investments-dashboard/investments-dashboard.utils';
@@ -30,6 +32,11 @@ export function Home() {
     hasError: false,
   });
   const [accountsState, setAccountsState] = useState<AccountsFeatureState>({
+    accounts: [],
+    isLoading: true,
+    hasError: false,
+  });
+  const [cardsState, setCardsState] = useState<CardsFeatureState>({
     accounts: [],
     isLoading: true,
     hasError: false,
@@ -80,6 +87,11 @@ export function Home() {
           isLoading: false,
           hasError: false,
         });
+        setCardsState({
+          accounts,
+          isLoading: false,
+          hasError: false,
+        });
       })
       .catch(() => {
         if (!isMounted) {
@@ -97,6 +109,11 @@ export function Home() {
           hasError: true,
         }));
         setAccountsState((current) => ({
+          accounts: current.accounts,
+          isLoading: false,
+          hasError: true,
+        }));
+        setCardsState((current) => ({
           accounts: current.accounts,
           isLoading: false,
           hasError: true,
@@ -257,6 +274,13 @@ export function Home() {
         ) : activeFeature === 'contas' ? (
           <AccountsFeature
             state={accountsState}
+            transactions={transactions}
+            transactionsLoading={transactionsLoading}
+            transactionsError={transactionsError}
+          />
+        ) : activeFeature === 'cartoes' ? (
+          <CardsFeature
+            state={cardsState}
             transactions={transactions}
             transactionsLoading={transactionsLoading}
             transactionsError={transactionsError}
