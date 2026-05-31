@@ -75,7 +75,7 @@ O target `deploy-proxy` no `Makefile` deve preparar os pre-requisitos e executar
 Contrato obrigatorio do `deploy-proxy` no `Makefile`:
 - executar no diretorio `proxy`;
 - usar `yarn` como gerenciador de pacotes;
-- publicar com `wrangler deploy` (sem logica de reconciliacao dentro do target);
+- publicar com `wrangler deploy --env production` (sem logica de reconciliacao dentro do target);
 - permitir override de ambiente/flags por variaveis de shell quando necessario.
 
 Regra bloqueante:
@@ -83,7 +83,6 @@ Regra bloqueante:
 
 ## Regra Obrigatoria: Variaveis do Proxy
 Para aderencia a arquitetura e seguranca (`frontend -> proxy -> backend`), o deploy do `proxy` deve declarar e manter, no minimo, as chaves:
-- `BACKEND_BASE_URL`
 - `PROXY_SIGNING_SECRET`
 - `PROXY_ALLOWED_ORIGINS`
 
@@ -95,7 +94,6 @@ Regras:
 ## Regra de Seguranca e Arquitetura (Obrigatoria)
 A reconciliacao deve preservar os requisitos:
 - `proxy` como ponto unico de entrada do frontend;
-- encaminhamento apenas para backend permitido (`BACKEND_BASE_URL` controlado);
 - proibido introduzir consumo direto `frontend -> backend` nos artefatos de deploy;
 - manter consistencia com validacao de bearer token e assinatura tecnica proxy->backend.
 
@@ -116,9 +114,10 @@ A execucao so pode ser considerada concluida quando todos os itens abaixo forem 
 A skill deve considerar divergencia quando houver qualquer um dos casos abaixo:
 - ausencia de `proxy/wrangler.jsonc`;
 - `main` diferente de `src/app/worker.ts` sem justificativa tecnica;
-- ausencia de qualquer chave obrigatoria (`BACKEND_BASE_URL`, `PROXY_SIGNING_SECRET`, `PROXY_ALLOWED_ORIGINS`);
+- ausencia de qualquer chave obrigatoria (`PROXY_SIGNING_SECRET`, `PROXY_ALLOWED_ORIGINS`);
 - diferenca de nomes de chaves entre `.env` e `wrangler.jsonc`;
 - ausencia de target `deploy-proxy` no `Makefile`.
+- target `deploy-proxy` sem `--env production`.
 
 A skill deve considerar consistencia fim a fim apenas quando:
 - o inventario de configuracao de deploy representa fielmente o projeto `./proxy`;

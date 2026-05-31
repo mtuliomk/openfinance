@@ -2,7 +2,7 @@
 
 .AWS_PROFILE := mtuliomk
 
-.PHONY: help install-frontend install-backend install-proxy install-skills start-frontend start-backend start-proxy migrate deploy-proxy
+.PHONY: help install-frontend install-backend install-proxy install-skills start-frontend start-backend start-proxy migrate deploy-proxy deploy-frontend
 
 help:
 	@echo "Comandos make disponíveis:"
@@ -15,6 +15,7 @@ help:
 	@echo "  make start-backend    - Inicia o backend em modo dev"
 	@echo "  make start-proxy      - Inicia o proxy em modo dev"
 	@echo "  make migrate          - Gera e aplica migrations do backend"
+	@echo "  make deploy-frontend  - Build e deploy do frontend no Cloudflare Pages"
 
 install-frontend:
 	yarn --cwd frontend install
@@ -51,7 +52,11 @@ migrate:
 	yarn --cwd backend db:migrate
 
 deploy-proxy: install-proxy
-	cd proxy && yarn wrangler deploy $(WRANGLER_FLAGS)
+	cd proxy && yarn wrangler deploy --env production $(WRANGLER_FLAGS)
+
+deploy-frontend: install-frontend
+	cd frontend && yarn build
+	cd frontend && yarn wrangler pages deploy dist --project-name openfinance-frontend --branch main $(WRANGLER_FLAGS)
 
 DEPLOYMENT_BUCKET ?= openfinance-deploy-bucket
 DEPLOYMENT_KEY_PREFIX ?= deploy-openfinance
