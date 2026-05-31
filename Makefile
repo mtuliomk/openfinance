@@ -49,3 +49,21 @@ start-proxy: install-proxy
 migrate:
 	yarn --cwd backend db:generate
 	yarn --cwd backend db:migrate
+
+DEPLOYMENT_BUCKET ?= openfinance-deploy-bucket
+DEPLOYMENT_KEY_PREFIX ?= deploy-openfinance
+
+.PHONY: deploy-backend
+deploy-backend:
+	aws s3api head-bucket --bucket "$(DEPLOYMENT_BUCKET)" --profile $(.AWS_PROFILE) >/dev/null 2>&1 || aws s3 mb "s3://$(DEPLOYMENT_BUCKET)" --profile $(.AWS_PROFILE)
+	yarn --cwd backend install --frozen-lockfile
+	yarn --cwd backend build
+	cd backend && zip -r ../backend.zip dist package.json yarn.lock >/dev/null
+	aws s3 cp backend.zip "s3://$(DEPLOYMENT_BUCKET)/$(DEPLOYMENT_KEY_PREFIX)/backend.zip" --profile $(.AWS_PROFILE)
+	rm -f backend.zip
+	aws cloudformation deploy \
+		--template-file deploy/backend/backend-serverless.yml \
+		--stack-name openfinance-backend \
+		--capabilities CAPABILITY_IAM \
+		--profile $(.AWS_PROFILE) \
+		--parameter-overrides DeploymentBucket=$(DEPLOYMENT_BUCKET) DeploymentKeyPrefix=$(DEPLOYMENT_KEY_PREFIX)

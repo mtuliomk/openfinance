@@ -105,6 +105,14 @@ Toda lambda descoberta em `backend/src/app/lambda/*-lambda.ts` deve ter no templ
 
 A reconciliacao deve considerar divergencia quando existir lambda sem Function URL, sem permissao de invoke por URL ou sem output correspondente.
 
+## Regra Obrigatoria: Role IAM em SAM (Compatibilidade)
+No template `AWS::Serverless-2016-10-31`, a propriedade `Role` **nao** e suportada em `Globals.Function`.
+
+Regras:
+- nao declarar `Role` dentro de `Globals.Function`;
+- declarar `Role` explicitamente em cada recurso `AWS::Serverless::Function`;
+- considerar divergencia quando existir `Globals.Function.Role`, pois isso quebra o deploy com erro de validacao do transform SAM.
+
 ## Regra para Arquivo backend/.env Ausente
 Se `backend/.env` nao existir, a skill deve seguir a ordem:
 - usar `backend/.env.example` se existir;
@@ -118,6 +126,8 @@ Regras:
 - a skill deve mapear no template todas as chaves carregadas de `backend/.env` (ou fallback) para `Environment.Variables`;
 - nao buscar parametros em runtime no codigo da lambda quando o objetivo for apenas injetar configuracao de ambiente;
 - manter o prefixo `/openfinance/backend/` em todas as referencias;
+- no modelo atual desta skill, os parametros consumidos por `Environment.Variables` devem estar no SSM com tipo `String`;
+- usar apenas `{{resolve:ssm:/openfinance/backend/CHAVE}}` (nao usar `ssm-secure` nesse ponto);
 - considerar divergencia quando faltar variavel de ambiente mapeada para alguma chave esperada do SSM.
 
 ## Regra de Parameter Store (Pre-Provisionado, Fora do Stack)
@@ -126,6 +136,7 @@ Os parametros do SSM devem ser considerados pre-provisionados fora do CloudForma
 Regras:
 - a skill nao deve gerar recursos `AWS::SSM::Parameter` em `deploy/backend/backend-serverless.yml`;
 - o template deve somente referenciar parametros existentes via `{{resolve:ssm:/openfinance/backend/CHAVE}}`;
+- para os parametros referenciados por `Environment.Variables` das lambdas, a skill deve validar tipo `String` no SSM;
 - a reconciliacao deve falhar com mensagem clara quando houver chave esperada no `.env`/`.env.example` ausente no SSM;
 - a criacao/atualizacao de valores de parametros SSM deve ocorrer por processo externo a esta skill.
 

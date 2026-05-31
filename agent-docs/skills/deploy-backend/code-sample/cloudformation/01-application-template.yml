@@ -16,7 +16,7 @@ Parameters:
     Type: String
   DeploymentKeyPrefix:
     Type: String
-    Default: backend
+    Default: deploy-openfinance
 
 Globals:
   Function:

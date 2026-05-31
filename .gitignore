@@ -45,6 +45,7 @@ yarn-error.log*
 
 # deployment
 **/.vercel/
+backend.zip
 
 # typescript
 **/*.tsbuildinfo

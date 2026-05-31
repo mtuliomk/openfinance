@@ -1,7 +1,11 @@
 Outputs:
-  AccountLambdaArn:
-    Value: !GetAtt AccountLambda.Arn
-  AccountLambdaName:
-    Value: !Ref AccountLambda
   AccountLambdaUrl:
     Value: !GetAtt AccountLambdaUrl.FunctionUrl
+  HealthLambdaUrl:
+    Value: !GetAtt HealthLambdaUrl.FunctionUrl
+  ItemsLambdaUrl:
+    Value: !GetAtt ItemsLambdaUrl.FunctionUrl
+  OpenfinanceReloadLambdaUrl:
+    Value: !GetAtt OpenfinanceReloadLambdaUrl.FunctionUrl
+  TransactionLambdaUrl:
+    Value: !GetAtt TransactionLambdaUrl.FunctionUrl
