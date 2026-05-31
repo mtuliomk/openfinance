@@ -15,7 +15,6 @@ help:
 	@echo "  make start-backend    - Inicia o backend em modo dev"
 	@echo "  make start-proxy      - Inicia o proxy em modo dev"
 	@echo "  make migrate          - Gera e aplica migrations do backend"
-	@echo "  make deploy-backend   - Faz deploy backend (discover, SAM, sync env)"
 
 install-frontend:
 	yarn --cwd frontend install
