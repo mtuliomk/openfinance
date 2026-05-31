@@ -19,16 +19,13 @@ export async function handler(
 ): Promise<APIGatewayProxyStructuredResultV2> {
   const method = event.requestContext.http.method;
   const path = event.requestContext.http.path;
-
-  if (method === 'GET' && path === '/consent') {
-    const payload = await listConsent(consentRepository);
-    return toLambdaJson(200, payload);
-  }
-
   if (method === 'GET') {
     const rawId = extractConsentId(path);
-    if (!rawId) return toLambdaJson(404, { error: 'Not found' });
 
+    if (!rawId) {
+      const payload = await listConsent(consentRepository);
+      return toLambdaJson(200, payload);
+    }
     try {
       const id = consentIdSchema.parse(rawId);
       const payload = await getConsentById(consentRepository, id);

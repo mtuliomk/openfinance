@@ -19,17 +19,12 @@ export async function handler(
 ): Promise<APIGatewayProxyStructuredResultV2> {
   const method = event.requestContext.http.method;
   const path = event.requestContext.http.path;
-
-  if (method === 'GET' && path === '/items') {
-    const payload = await listItems(itemsRepository);
-    return toLambdaJson(200, payload);
-  }
-
   if (method === 'GET') {
     const rawId = extractItemId(path);
 
     if (!rawId) {
-      return toLambdaJson(404, { error: 'Not found' });
+      const payload = await listItems(itemsRepository);
+      return toLambdaJson(200, payload);
     }
 
     try {

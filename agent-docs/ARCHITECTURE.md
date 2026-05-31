@@ -102,6 +102,8 @@ flowchart LR
 - Centraliza schema/migrations com Drizzle no backend.
 - Expõe contratos estáveis para consumo via proxy.
 - Toda entrada deve ser validada com `zod` na borda.
+- Para Lambdas com Function URL dedicada por endpoint, os handlers nao devem depender de `requestContext.http.path` fixo para roteamento, pois o path pode chegar como `/`.
+- Nesses casos, o handler deve validar metodo HTTP e payload na borda; quando aplicavel, o id/recurso deve ser extraido do path recebido sem acoplamento a rota absoluta.
 
 ## Arquitetura de Persistencia (Backend + Turso + Drizzle)
 - Fonte de verdade de schema: arquivos de schema Drizzle em `backend/src/infra/database/turso/schema/*`.

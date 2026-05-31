@@ -66,7 +66,7 @@ deploy-backend:
 	aws s3api head-bucket --bucket "$(DEPLOYMENT_BUCKET)" --profile $(.AWS_PROFILE) >/dev/null 2>&1 || aws s3 mb "s3://$(DEPLOYMENT_BUCKET)" --profile $(.AWS_PROFILE)
 	yarn --cwd backend install --frozen-lockfile
 	yarn --cwd backend build
-	cd backend && zip -r ../backend.zip dist package.json yarn.lock >/dev/null
+	cd backend && zip -r ../backend.zip dist node_modules package.json yarn.lock >/dev/null
 	aws s3 cp backend.zip "s3://$(DEPLOYMENT_BUCKET)/$(DEPLOYMENT_KEY_PREFIX)/backend.zip" --profile $(.AWS_PROFILE)
 	rm -f backend.zip
 	aws cloudformation deploy \

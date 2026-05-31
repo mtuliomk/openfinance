@@ -6,7 +6,7 @@ Criar e reconciliar os artefatos de deploy do frontend em Cloudflare Pages, semp
 Escopo desta skill:
 - gerar e atualizar `frontend/wrangler.jsonc` conforme padrao arquitetural;
 - criar ou atualizar o target `deploy-frontend` no `Makefile` para executar apenas o deploy do frontend em Cloudflare Pages usando artefatos ja reconciliados;
-- validar divergencias entre variaveis locais (`frontend/.env`) e variaveis declaradas para o deploy do frontend.
+- validar divergencias entre variaveis de build do Vite (`frontend/.env` e `frontend/.env.production`) e a arquitetura `frontend -> proxy`.
 
 Fora do escopo desta skill:
 - executar deploy real em Cloudflare (`make deploy-frontend`, `wrangler pages deploy`);
@@ -19,17 +19,15 @@ Fora do escopo desta skill:
 flowchart TD
     A[Dev executa skill manualmente] --> N[Skill deploy-frontend em execucao]
     N --> O[Inspecionar projeto frontend\nfrontend/package.json e vite.config.ts]
-    N --> P[Ler chaves de ambiente\nfrontend/.env ou fallback]
+    N --> P[Ler chaves de ambiente de build\nfrontend/.env e .env.production]
     N --> Q[Reconciliar frontend/wrangler.jsonc]
     N --> R[Reconciliar target make deploy-frontend]
 
     subgraph CF[Cloudflare]
       W[Cloudflare Pages Project\nopenfinance-frontend]
-      V[Vars/Secrets do Pages]
     end
 
     Q --> W
-    Q --> V
     R --> W
 ```
 
@@ -63,14 +61,14 @@ A skill deve considerar bootstrap necessario quando faltar qualquer item da list
 
 Quando bootstrap for necessario, a skill deve obrigatoriamente:
 - identificar projeto SPA em `frontend/package.json` (build via Vite);
-- ler chaves de ambiente na ordem `frontend/.env` -> lista vazia;
+- ler chaves de ambiente na ordem `frontend/.env` -> `frontend/.env.production` -> lista vazia;
 - gerar `frontend/wrangler.jsonc` com `name`, `compatibility_date` e `pages_build_output_dir` minimos para o frontend.
 
 ## Regra de Reconciliacao com Artefatos Existentes (Obrigatoria)
 Quando os artefatos de deploy ja existirem, a skill deve obrigatoriamente:
 - revalidar `name`, `compatibility_date` e `pages_build_output_dir` de `frontend/wrangler.jsonc`;
-- reler chaves de `frontend/.env`;
-- garantir que as variaveis publicas do frontend estejam declaradas no deploy;
+- reler chaves de `frontend/.env` e `frontend/.env.production`;
+- garantir que variaveis `VITE_*` estejam definidas nos arquivos `.env*` do frontend (fonte de build);
 - regenerar `frontend/wrangler.jsonc` quando houver diferenca estrutural relevante.
 
 A skill nao deve assumir que artefatos existentes estao atualizados sem reconciliacao.
@@ -92,9 +90,10 @@ Regra bloqueante:
 Para aderencia a arquitetura e seguranca (`frontend -> proxy -> backend`), o deploy do frontend deve declarar somente variaveis publicas necessarias ao client.
 
 Regras:
-- nomes de chaves devem ser consistentes entre `frontend/.env` e `frontend/wrangler.jsonc`;
+- nomes de chaves `VITE_*` devem ser consistentes entre `frontend/.env` (dev) e `frontend/.env.production` (producao), quando aplicavel;
 - variaveis sensiveis (tokens privados, segredos, chaves de assinatura) sao proibidas no frontend;
 - variaveis de URL devem apontar para o proxy, nunca para backend/Lambda.
+- para Vite SPA em Pages, variaveis `VITE_*` devem ser resolvidas no build via `.env*`; nao usar `vars/env.vars` de `wrangler.jsonc` como fonte de verdade para `import.meta.env`.
 
 ## Regra de Seguranca (Obrigatoria)
 A reconciliacao deve preservar os requisitos:
@@ -111,7 +110,7 @@ A reconciliacao deve preservar os requisitos:
 A execucao so pode ser considerada concluida quando todos os itens abaixo forem verdadeiros:
 - todos os artefatos canonicos existem nos caminhos definidos nesta skill;
 - `frontend/wrangler.jsonc` esta consistente com o projeto `./frontend`;
-- variaveis publicas do frontend estao alinhadas com `frontend/.env` (comparacao por chave);
+- variaveis publicas do frontend estao alinhadas entre `frontend/.env` e `frontend/.env.production` (comparacao por chave relevante);
 - target `deploy-frontend` do `Makefile` existe e cumpre o contrato desta skill;
 - nao restam divergencias em relacao as regras desta skill.
 
@@ -121,7 +120,9 @@ A skill deve considerar divergencia quando houver qualquer um dos casos abaixo:
 - ausencia de `pages_build_output_dir` apontando para `dist`;
 - ausencia de target `deploy-frontend` no `Makefile`;
 - target `deploy-frontend` sem `--branch <branch-producao>`;
+- uso de `--env` no comando `wrangler pages deploy` do target `deploy-frontend`;
 - existencia de variavel de ambiente do frontend apontando diretamente para backend/Lambda;
+- ausencia de `VITE_PROXY_BASE_URL` em `frontend/.env.production` apontando para o proxy de producao;
 - existencia de chave sensivel em variavel publica do frontend.
 
 A skill deve considerar consistencia fim a fim apenas quando:

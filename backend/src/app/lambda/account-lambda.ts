@@ -30,7 +30,7 @@ export async function handler(
   const method = event.requestContext.http.method;
   const path = event.requestContext.http.path;
 
-  if (method === 'POST' && path === '/account') {
+  if (method === 'POST') {
     try {
       const parsedBody = JSON.parse(event.body ?? '{}') as unknown;
       const input = accountCreateSchema.parse(parsedBody);
@@ -40,16 +40,13 @@ export async function handler(
       return toLambdaJson(400, { error: 'Invalid request input' });
     }
   }
-
-  if (method === 'GET' && path === '/account') {
-    const payload = await listAccount(accountRepository);
-    return toLambdaJson(200, payload);
-  }
-
   if (method === 'GET') {
     const rawId = extractAccountId(path);
-    if (!rawId) return toLambdaJson(404, { error: 'Not found' });
 
+    if (!rawId) {
+      const payload = await listAccount(accountRepository);
+      return toLambdaJson(200, payload);
+    }
     try {
       const id = accountIdSchema.parse(rawId);
       const payload = await getAccountById(accountRepository, id);

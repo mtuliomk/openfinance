@@ -27,9 +27,8 @@ export async function handler(
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyStructuredResultV2> {
   const method = event.requestContext.http.method;
-  const path = event.requestContext.http.path;
 
-  if (method !== 'POST' || path !== '/openfinance/reload') {
+  if (method !== 'POST') {
     return toLambdaJson(404, { error: 'Not found' });
   }
 

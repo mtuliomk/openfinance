@@ -6,7 +6,7 @@ import { toLambdaJson } from '../shared/http-response.js';
 export async function handler(
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyStructuredResultV2> {
-  if (event.requestContext.http.method !== 'GET' || event.requestContext.http.path !== '/health') {
+  if (event.requestContext.http.method !== 'GET') {
     return toLambdaJson(404, { error: 'Not found' });
   }
 

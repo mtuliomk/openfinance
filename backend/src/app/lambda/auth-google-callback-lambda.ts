@@ -25,7 +25,7 @@ function getCookieValue(cookieHeader: string | undefined, name: string): string 
 export async function handler(
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyStructuredResultV2> {
-  if (event.requestContext.http.method !== 'GET' || event.requestContext.http.path !== '/auth/google/callback') {
+  if (event.requestContext.http.method !== 'GET') {
     return toLambdaJson(404, { error: 'Not found' });
   }
 

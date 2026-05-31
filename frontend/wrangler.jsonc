@@ -1,15 +1,5 @@
 {
   "name": "openfinance-frontend",
   "compatibility_date": "2026-05-31",
-  "pages_build_output_dir": "dist",
-  "vars": {
-    "VITE_PROXY_BASE_URL": "http://localhost:3001"
-  },
-  "env": {
-    "production": {
-      "vars": {
-        "VITE_PROXY_BASE_URL": "https://openfinance-proxy.lembrai.workers.dev"
-      }
-    }
-  }
+  "pages_build_output_dir": "dist"
 }
