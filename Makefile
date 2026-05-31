@@ -1,6 +1,7 @@
 .DEFAULT_GOAL := help
 
-.AWS_PROFILE := mtuliomk
+AWS_PROFILE ?=
+AWS_CLI_PROFILE_ARG := $(if $(AWS_PROFILE),--profile $(AWS_PROFILE),)
 
 .PHONY: help install-frontend install-backend install-proxy install-skills start-frontend start-backend start-proxy migrate deploy-proxy deploy-frontend
 
@@ -63,15 +64,15 @@ DEPLOYMENT_KEY_PREFIX ?= deploy-openfinance
 
 .PHONY: deploy-backend
 deploy-backend:
-	aws s3api head-bucket --bucket "$(DEPLOYMENT_BUCKET)" --profile $(.AWS_PROFILE) >/dev/null 2>&1 || aws s3 mb "s3://$(DEPLOYMENT_BUCKET)" --profile $(.AWS_PROFILE)
+	aws s3api head-bucket --bucket "$(DEPLOYMENT_BUCKET)" $(AWS_CLI_PROFILE_ARG) >/dev/null 2>&1 || aws s3 mb "s3://$(DEPLOYMENT_BUCKET)" $(AWS_CLI_PROFILE_ARG)
 	yarn --cwd backend install --frozen-lockfile
 	yarn --cwd backend build
 	cd backend && zip -r ../backend.zip dist node_modules package.json yarn.lock >/dev/null
-	aws s3 cp backend.zip "s3://$(DEPLOYMENT_BUCKET)/$(DEPLOYMENT_KEY_PREFIX)/backend.zip" --profile $(.AWS_PROFILE)
+	aws s3 cp backend.zip "s3://$(DEPLOYMENT_BUCKET)/$(DEPLOYMENT_KEY_PREFIX)/backend.zip" $(AWS_CLI_PROFILE_ARG)
 	rm -f backend.zip
 	aws cloudformation deploy \
 		--template-file deploy/backend/backend-serverless.yml \
 		--stack-name openfinance-backend \
 		--capabilities CAPABILITY_IAM \
-		--profile $(.AWS_PROFILE) \
+		$(AWS_CLI_PROFILE_ARG) \
 		--parameter-overrides DeploymentBucket=$(DEPLOYMENT_BUCKET) DeploymentKeyPrefix=$(DEPLOYMENT_KEY_PREFIX)
