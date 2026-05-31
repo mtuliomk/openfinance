@@ -5,11 +5,11 @@ Criar e reconciliar os artefatos de CloudFormation/SAM do backend, sempre sincro
 
 Escopo desta skill:
 - gerar e atualizar `deploy/backend/backend-serverless.yml`.
+- criar ou atualizar o target `deploy-backend` no `Makefile` para executar apenas o deploy da stack usando artefatos ja gerados.
 
 Fora do escopo desta skill:
 - executar deploy via `make deploy-backend`;
 - editar workflow de GitHub Actions;
-- editar target do `Makefile`.
 
 A skill deve executar diretamente a descoberta de lambdas e a leitura de variaveis de ambiente durante a execucao, atualizando o template CloudFormation/SAM sem depender de scripts auxiliares intermediarios.
 
@@ -114,7 +114,10 @@ A atualizacao de artefatos e responsabilidade exclusiva da execucao manual da sk
 O target `deploy-backend` deve referenciar explicitamente:
 - `deploy/backend/backend-serverless.yml`
 
-Observacao: esta skill valida compatibilidade com esse contrato, mas nao deve editar `Makefile`.
+Em toda reconciliacao, esta skill deve criar o target `deploy-backend` quando ausente ou atualiza-lo quando divergente do contrato acima.
+
+Regra bloqueante:
+- a skill pode editar `Makefile`, mas nao pode executar `make deploy-backend`.
 
 ## Regra de GitHub Actions
 O workflow `.github/workflows/deploy-backend-lambda.yml` deve executar o deploy chamando:
