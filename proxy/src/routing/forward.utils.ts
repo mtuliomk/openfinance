@@ -1,7 +1,6 @@
-export function buildForwardUrl(backendBaseUrl: string, requestUrl: string): string {
+export function buildForwardUrl(upstreamUrl: string, requestUrl: string): string {
   const incoming = new URL(requestUrl);
-  const target = new URL(backendBaseUrl);
-  target.pathname = incoming.pathname;
+  const target = new URL(upstreamUrl);
   target.search = incoming.search;
   return target.toString();
 }

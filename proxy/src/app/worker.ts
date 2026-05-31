@@ -1,6 +1,12 @@
 import { buildInternalAuthHeader, validateBearerToken } from '../auth/proxy-auth';
 import { forwardRequest } from '../routing/forward';
-import { badGatewayResponse, forbiddenResponse, unauthorizedResponse } from '../shared/http';
+import { resolveRoute } from '../routing/route-map.utils';
+import {
+  badGatewayResponse,
+  forbiddenResponse,
+  notFoundResponse,
+  unauthorizedResponse
+} from '../shared/http';
 import { buildCorrelationId, parseEnv } from '../shared/http.utils';
 import { isAllowedOrigin } from './worker.utils';
 import type { WorkerHandler } from './worker.types';
@@ -10,6 +16,7 @@ const worker: WorkerHandler = {
     const correlationId = buildCorrelationId();
     const parsedEnv = parseEnv(env);
     const url = new URL(request.url);
+    const matchedRoute = resolveRoute(request.method, url.pathname);
     const isGoogleAuthRoute =
       url.pathname === '/auth/google/start' || url.pathname === '/auth/google/callback';
     const isPublicAsset = url.pathname === '/favicon.ico';
@@ -33,18 +40,23 @@ const worker: WorkerHandler = {
       return withCors(forbiddenResponse(correlationId, 'Origin not allowed'), origin);
     }
 
+    if (!matchedRoute && !isPublicAsset) {
+      return withCors(notFoundResponse(correlationId), origin);
+    }
+
     if (!isPublicRoute && !validateBearerToken(request.headers.get('authorization'))) {
       return withCors(unauthorizedResponse(correlationId), origin);
     }
 
     try {
-      const internalAuthHeader = await buildInternalAuthHeader(
-        parsedEnv.PROXY_SIGNING_SECRET,
-        parsedEnv.BACKEND_BASE_URL
-      );
+      const upstreamUrl = matchedRoute ? parsedEnv[matchedRoute.upstreamEnvKey] : null;
+      if (!upstreamUrl && !isPublicAsset) {
+        return withCors(notFoundResponse(correlationId), origin);
+      }
+      const internalAuthHeader = await buildInternalAuthHeader(parsedEnv.PROXY_SIGNING_SECRET, upstreamUrl!);
 
       const upstream = await forwardRequest(request, {
-        backendBaseUrl: parsedEnv.BACKEND_BASE_URL,
+        upstreamUrl: upstreamUrl ?? request.url,
         internalAuthHeader,
         correlationId
       });

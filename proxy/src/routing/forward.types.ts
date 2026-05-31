@@ -1,5 +1,5 @@
 export interface ForwardConfig {
-  backendBaseUrl: string;
+  upstreamUrl: string;
   internalAuthHeader: string;
   correlationId: string;
 }

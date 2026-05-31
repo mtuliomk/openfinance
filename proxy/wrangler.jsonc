@@ -3,8 +3,38 @@
   "main": "src/app/worker.ts",
   "compatibility_date": "2026-05-30",
   "vars": {
-    "BACKEND_BASE_URL": "http://localhost:3002",
     "PROXY_SIGNING_SECRET": "6872df7c60a02e764a08828570723ab027e846a752379add374e30a0c8e0cd93",
-    "PROXY_ALLOWED_ORIGINS": "http://localhost:3000,http://localhost:5173"
+    "PROXY_ALLOWED_ORIGINS": "http://localhost:3000,http://localhost:5173",
+    "LAMBDA_HEALTH_URL": "http://localhost:3002/health",
+    "LAMBDA_AUTH_GOOGLE_START_URL": "http://localhost:3002/auth/google/start",
+    "LAMBDA_AUTH_GOOGLE_CALLBACK_URL": "http://localhost:3002/auth/google/callback",
+    "LAMBDA_CONSENT_URL": "http://localhost:3002/consent",
+    "LAMBDA_ACCOUNT_URL": "http://localhost:3002/account",
+    "LAMBDA_TRANSACTION_URL": "http://localhost:3002/transaction",
+    "LAMBDA_INVESTMENT_URL": "http://localhost:3002/investment",
+    "LAMBDA_LOAN_URL": "http://localhost:3002/loan",
+    "LAMBDA_BILL_URL": "http://localhost:3002/bill",
+    "LAMBDA_IDENTITY_URL": "http://localhost:3002/identity",
+    "LAMBDA_ITEMS_URL": "http://localhost:3002/items",
+    "LAMBDA_OPENFINANCE_RELOAD_URL": "http://localhost:3002/openfinance/reload"
+  },
+  "env": {
+    "production": {
+      "vars": {
+        "PROXY_ALLOWED_ORIGINS": "https://openfinance.pages.dev",
+        "LAMBDA_HEALTH_URL": "https://moh5h2uv5jplvlmdm76v7uumgm0wvwhj.lambda-url.us-east-1.on.aws/",
+        "LAMBDA_AUTH_GOOGLE_START_URL": "https://jbvi6i26bzltjbo2x7xdbyjds40axnhc.lambda-url.us-east-1.on.aws/",
+        "LAMBDA_AUTH_GOOGLE_CALLBACK_URL": "https://662olmqre6sch4u3kmbqulagze0xtwyl.lambda-url.us-east-1.on.aws/",
+        "LAMBDA_CONSENT_URL": "https://gnlmkirfwxkrmgtqy2jqa7vqie0ycwyt.lambda-url.us-east-1.on.aws/",
+        "LAMBDA_ACCOUNT_URL": "https://riayw4bqcymdijewsbwzuy26s40fehnq.lambda-url.us-east-1.on.aws/",
+        "LAMBDA_TRANSACTION_URL": "https://odw2fzkdhkstrxt3c5j7nhhnum0tdire.lambda-url.us-east-1.on.aws/",
+        "LAMBDA_INVESTMENT_URL": "https://o6yj4ya2uuek75shqybgoh6r4m0pzpaa.lambda-url.us-east-1.on.aws/",
+        "LAMBDA_LOAN_URL": "https://c5zrnrcuzi4bjwiszk6isyuhy40msgbv.lambda-url.us-east-1.on.aws/",
+        "LAMBDA_BILL_URL": "https://eme5gpyzhpozehnhu5xetfd63y0ajyud.lambda-url.us-east-1.on.aws/",
+        "LAMBDA_IDENTITY_URL": "https://r65mfwzs5ifqqjbpkfm6rb22gy0cmlvr.lambda-url.us-east-1.on.aws/",
+        "LAMBDA_ITEMS_URL": "https://rljs6o34nqqipmeqzprffx4lcu0rfrdi.lambda-url.us-east-1.on.aws/",
+        "LAMBDA_OPENFINANCE_RELOAD_URL": "https://nm7zcc7jidtrr4vxjxps6f6oli0yzsno.lambda-url.us-east-1.on.aws/"
+      }
+    }
   }
 }

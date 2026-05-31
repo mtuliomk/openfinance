@@ -7,7 +7,7 @@ export async function forwardRequest(request: Request, config: ForwardConfig): P
   headers.set('x-correlation-id', config.correlationId);
   headers.delete('host');
 
-  const forwardUrl = buildForwardUrl(config.backendBaseUrl, request.url);
+  const forwardUrl = buildForwardUrl(config.upstreamUrl, request.url);
   const init: RequestInit = {
     method: request.method,
     headers

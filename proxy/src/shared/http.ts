@@ -15,3 +15,8 @@ export function badGatewayResponse(correlationId: string): Response {
   const body: ErrorBody = { error: 'Bad Gateway', correlationId };
   return buildJsonResponse(502, body);
 }
+
+export function notFoundResponse(correlationId: string, message = 'Not Found'): Response {
+  const body: ErrorBody = { error: message, correlationId };
+  return buildJsonResponse(404, body);
+}
