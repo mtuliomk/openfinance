@@ -10,8 +10,7 @@ Resources:
       Environment:
         Variables:
           NODE_ENV: production
-      Policies:
-        - AWSLambdaBasicExecutionRole
+      Role: !GetAtt BackendLambdaExecutionRole.Arn
       Tags:
         service: openfinance
         component: backend

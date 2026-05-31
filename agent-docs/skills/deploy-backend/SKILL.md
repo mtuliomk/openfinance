@@ -1,53 +1,75 @@
 # Deploy Backend Lambda Skill
 
+## Objetivo
+Criar e reconciliar os artefatos de CloudFormation/SAM do backend, sempre sincronizados com o codigo atual do backend.
+
+Escopo desta skill:
+- gerar e atualizar `deploy/backend/backend-serverless.yml`.
+
+Fora do escopo desta skill:
+- executar deploy via `make deploy-backend`;
+- editar workflow de GitHub Actions;
+- editar target do `Makefile`.
+
+A skill deve executar diretamente a descoberta de lambdas e a leitura de variaveis de ambiente durante a execucao, atualizando o template CloudFormation/SAM sem depender de scripts auxiliares intermediarios.
+
+A skill tambem deve executar checagem obrigatoria de divergencia entre `backend/.env` (ou fallback) e AWS SSM Parameter Store.
+
 ## Arquitetura Final de Deploy
 
 ```mermaid
 flowchart TD
-    A[ENV backend] --> B[Gerar parametros SSM]
-    B --> C[Parametros prontos]
+    A[Dev executa skill manualmente] --> N[Skill deploy-backend em execucao]
+    N --> O[Descobrir handlers em\nbackend/src/app/lambda/*-lambda.ts]
+    N --> P[Ler chaves de ambiente\nbackend/.env ou .env.example]
 
-    D[Handlers Lambda] --> E[Descobrir lambdas]
-    E --> F[Gerar catalogo]
-    F --> G[Template SAM]
-    G --> H[Stack CloudFormation]
+    O --> Q[Atualizar backend-serverless.yml]
+    P --> Q
 
-    C --> I[Sincronizar env]
-    H --> I
-    I --> J[Env nas Lambdas]
+    subgraph AWS[AWS Account]
+      S[CloudFormation/SAM\nServerless Application Stack]
+      T[AWS Lambda Functions]
+      U[AWS::SSM::Parameter\n/openfinance/backend/*]
+      V[CloudWatch Log Groups]
+      W[IAM Role e Policies]
+    end
 
-    K[Push main] --> L[Workflow deploy backend]
+    Q --> S
+    S --> T
+    S --> U
+    S --> V
+    S --> W
+
+    K[Push main] --> L[GitHub Actions\ndeploy-backend-lambda.yml]
     L --> M[make deploy-backend]
-    M --> E
-    M --> G
-    M --> I
+    M --> D[Deploy usando artefatos ja gerados]
+    D --> S
 ```
 
 ## Modo de Execucao (Reconciliacao Completa Obrigatoria)
 Toda execucao desta skill deve rodar em modo de reconciliacao completa, revisando todos os artefatos canonicos e garantindo consistencia fim a fim.
 
-A skill deve considerar "bootstrap necessario" quando faltar qualquer arquivo da lista:
-- `deploy/backend/discover-lambdas.ts`
+## Regra de Execucao Assistida (Obrigatoria)
+Esta skill deve ser executada apenas pelo DEV, de forma assistida, durante fluxo manual de desenvolvimento.
+
+Regras bloqueantes:
+- proibido executar esta skill de forma autonoma em CI/CD, cron, bot ou pipeline automatizado;
+- proibido acionar reconciliacao automatica por `make deploy-backend` ou por workflow de GitHub Actions;
+- toda execucao deve ter supervisao humana do DEV, incluindo revisao dos diffs gerados antes de concluir.
+
+A skill deve considerar "bootstrap necessario" quando faltar qualquer item da lista:
 - `deploy/backend/backend-serverless.yml`
-- `deploy/backend/sync-lambda-env.sh`
-- `deploy/backend/generated/lambdas.json`
-- `.github/workflows/deploy-backend-lambda.yml` (caso ainda nao exista no repositorio)
-- target `deploy-backend` no `Makefile` da raiz
 
 Quando bootstrap for necessario, a skill deve obrigatoriamente:
-- criar a estrutura de pastas `deploy/backend/generated`;
-- descobrir lambdas dinamicamente em `backend/src/app/lambda/*-lambda.ts`;
-- gerar `deploy/backend/generated/lambdas.json` com o catalogo inicial;
+- descobrir lambdas dinamicamente em `backend/src/app/lambda/*-lambda.ts` durante a execucao;
+- ler chaves de ambiente na ordem `backend/.env` -> `backend/.env.example` -> lista vazia;
 - gerar `deploy/backend/backend-serverless.yml` com funcoes, IAM e parametros SSM;
-- gerar `deploy/backend/sync-lambda-env.sh` com permissao de execucao;
-- criar ou atualizar o target `deploy-backend` no `Makefile`;
-- criar ou atualizar o workflow `.github/workflows/deploy-backend-lambda.yml` para chamar apenas `make deploy-backend`.
 
 Em toda execucao, a skill deve obrigatoriamente:
-- revisar todos os artefatos canonicos e o target do `Makefile`;
+- revisar os artefatos canonicos de CloudFormation/SAM;
 - atualizar os arquivos que estiverem desatualizados ou divergentes das regras desta skill;
 - criar os artefatos faltantes;
-- manter a consistencia entre `discover-lambdas.ts`, `lambdas.json`, `backend-serverless.yml`, `sync-lambda-env.sh`, workflow e `make deploy-backend`.
+- manter a consistencia entre codigo do backend e `backend-serverless.yml`.
 
 A skill nao pode considerar a tarefa concluida enquanto existir qualquer artefato faltante ou divergente.
 
@@ -61,14 +83,10 @@ Se o usuario nao informar, aplicar os valores default acima.
 
 ## Regra de Reconciliacao com Artefatos Existentes (Obrigatoria)
 Quando os artefatos de deploy ja existirem, a skill deve obrigatoriamente:
-- redescobrir lambdas dinamicamente em `backend/src/app/lambda/*-lambda.ts`;
+- redescobrir lambdas dinamicamente em `backend/src/app/lambda/*-lambda.ts` durante a execucao;
 - reler as chaves de `backend/.env`;
 - comparar com Parameter Store em `/openfinance/backend/`;
-- atualizar `deploy/backend/generated/lambdas.json` quando houver diferenca;
 - regenerar `deploy/backend/backend-serverless.yml` quando houver diferenca de lambdas ou variaveis;
-- revisar `deploy/backend/discover-lambdas.ts` e `deploy/backend/sync-lambda-env.sh` para garantir aderencia ao fluxo atual;
-- revisar `.github/workflows/deploy-backend-lambda.yml` para garantir chamada unica de `make deploy-backend`;
-- revisar o `Makefile` para garantir que o target `deploy-backend` exista e referencia os caminhos canonicos.
 
 A skill nao deve assumir que artefatos existentes estao atualizados sem reconciliacao.
 
@@ -87,32 +105,72 @@ Na primeira criacao dos artefatos de deploy, a skill deve:
 - manter o tipo `String` por padrao (ou `SecureString` quando explicitamente solicitado).
 
 ## Regra de Orquestracao por Makefile
-A skill deve criar/atualizar uma entrada no `Makefile` da raiz chamada:
-- `deploy-backend`
+O target `deploy-backend` no `Makefile` deve executar apenas o deploy da stack usando artefatos ja gerados.
 
-Esse target deve centralizar os passos de deploy backend (descoberta de lambdas, deploy SAM e sync de env).
-Os artefatos e scripts canonicos devem ficar em `deploy/backend`, incluindo:
-- `deploy/backend/discover-lambdas.ts`
+`make deploy-backend` nao deve executar discovery, reconciliacao de lambdas ou atualizacao de template.
+
+A atualizacao de artefatos e responsabilidade exclusiva da execucao manual da skill pelo dev.
+
+O target `deploy-backend` deve referenciar explicitamente:
 - `deploy/backend/backend-serverless.yml`
-- `deploy/backend/sync-lambda-env.sh`
 
-O target `deploy-backend` deve referenciar explicitamente esses caminhos.
-
-Ao editar o `Makefile`, a skill deve atuar de forma idempotente:
-- criar o target se nao existir;
-- atualizar apenas o target `deploy-backend` quando existir;
-- preservar targets e configuracoes nao relacionadas.
+Observacao: esta skill valida compatibilidade com esse contrato, mas nao deve editar `Makefile`.
 
 ## Regra de GitHub Actions
 O workflow `.github/workflows/deploy-backend-lambda.yml` deve executar o deploy chamando:
 - `make deploy-backend`
 
-O workflow nao deve duplicar a logica de deploy fora do Makefile.
+O workflow nao deve duplicar logica de deploy fora do Makefile e nao deve executar discovery/reconciliacao de artefatos.
 
-Ao editar o workflow, a skill deve atuar de forma idempotente:
-- criar o arquivo se nao existir;
-- atualizar apenas o job/steps de deploy backend quando existir;
-- preservar gatilhos, jobs e configuracoes nao relacionadas.
+Observacao: esta skill valida compatibilidade com esse contrato, mas nao deve editar workflow.
+
+## Checagem Obrigatoria: backend/.env x SSM Parameter Store
+A skill deve sempre validar divergencias entre chaves locais e chaves publicadas no SSM.
+
+### Perfil AWS obrigatorio
+Usar o perfil definido no `Makefile`:
+- `mtuliomk`
+
+### Prefixo SSM obrigatorio
+- `/openfinance/backend/`
+
+### Fluxo minimo de checagem
+1. Carregar chaves locais na ordem: `backend/.env` -> `backend/.env.example` -> lista vazia.
+2. Listar todos os parametros SSM via AWS CLI usando o perfil do `Makefile`, com paginacao completa.
+3. Comparar apenas nomes de chaves (nunca valores).
+4. Reportar 3 grupos:
+- faltando no SSM (existe no `.env` e nao existe no SSM)
+- sobrando no SSM (existe no SSM e nao existe no `.env`)
+- alinhadas (existe em ambos)
+
+### Exemplo de comando AWS CLI
+```bash
+next_token=""
+while true; do
+  if [ -n "$next_token" ]; then
+    response=$(aws ssm get-parameters-by-path \
+      --path /openfinance/backend/ \
+      --recursive \
+      --profile mtuliomk \
+      --starting-token "$next_token")
+  else
+    response=$(aws ssm get-parameters-by-path \
+      --path /openfinance/backend/ \
+      --recursive \
+      --profile mtuliomk)
+  fi
+
+  echo "$response" | jq -r '.Parameters[].Name'
+  next_token=$(echo "$response" | jq -r '.NextToken // empty')
+  [ -z "$next_token" ] && break
+done
+```
+
+### Regras de seguranca da checagem
+- Nao imprimir valores de variaveis em logs.
+- Nao persistir segredos em arquivos gerados.
+- Exibir somente nomes de chaves e status de divergencia.
+- Nao usar `--with-decryption` nesta checagem, pois a comparacao e apenas por nome.
 
 ## Code Samples
 Todos os exemplos de codigo ficam em:
@@ -124,21 +182,32 @@ Arquivos disponiveis:
 - `cloudformation/03-iam-role-resource.yml`
 - `cloudformation/04-parameter-store-resource.yml`
 - `cloudformation/05-outputs.yml`
-- `discover-lambdas.example.ts`
-- `sync-lambda-env.example.ts`
-- `deploy-backend-lambda.workflow.yml`
+- `deploy-backend-lambda.workflow.yml` (referencia de pipeline de deploy)
 
 ## Caminhos Canonicos de Saida
 - Base de artefatos de deploy backend: `deploy/backend/`
-- Lambdas descobertas: `deploy/backend/generated/lambdas.json`
 - Template SAM: `deploy/backend/backend-serverless.yml`
-- Script de sync de env: `deploy/backend/sync-lambda-env.sh`
 
 ## Critério de Conclusao da Reconciliacao (Todas as Execucoes)
 A execucao so pode ser considerada concluida quando todos os itens abaixo forem verdadeiros:
 - todos os artefatos canonicos existem nos caminhos definidos nesta skill;
-- `discover-lambdas.ts`, `lambdas.json`, `backend-serverless.yml`, `sync-lambda-env.sh`, workflow e `Makefile` estao consistentes entre si;
-- `make deploy-backend` executa localmente sem erro de arquivo ausente;
-- `deploy/backend/generated/lambdas.json` contem JSON valido (ao menos `[]` quando nao houver lambdas);
+- codigo do backend e `backend-serverless.yml` estao consistentes entre si;
 - `deploy/backend/backend-serverless.yml` referencia parametros SSM no prefixo `/openfinance/backend/`;
+- a checagem `.env` vs SSM foi executada com `--profile mtuliomk` e teve resultado registrado;
 - nao restam divergencias em relacao as regras desta skill.
+
+## Definicao Objetiva de Divergencia e Consistencia (Obrigatoria)
+Para evitar ambiguidade, a skill deve considerar divergencia quando houver qualquer um dos casos abaixo:
+- existe handler `backend/src/app/lambda/*-lambda.ts` sem recurso correspondente em `deploy/backend/backend-serverless.yml`;
+- existe recurso de funcao no template sem handler correspondente no backend (recurso orfao);
+- existe chave no `.env`/`.env.example` sem parametro SSM correspondente no prefixo `/openfinance/backend/`;
+- existe parametro SSM no prefixo `/openfinance/backend/` sem chave correspondente no `.env`/`.env.example`;
+- recurso SSM no template fora do prefixo `/openfinance/backend/`;
+- diferenca de configuracao obrigatoria por funcao no template (runtime, memory, timeout, handler, role e log group).
+
+A skill deve considerar consistencia fim a fim apenas quando todos os itens abaixo forem verdadeiros:
+- descoberta de lambdas e inventario de funcoes do template possuem cardinalidade e nomes equivalentes;
+- nao existem recursos orfaos de funcao no template;
+- comparacao de chaves `.env`/`.env.example` vs SSM nao possui itens faltando ou sobrando;
+- todos os parametros declarados no template usam prefixo `/openfinance/backend/`;
+- a regeneracao do `backend-serverless.yml` e idempotente (executar novamente sem mudanca de entrada nao altera diff do arquivo).

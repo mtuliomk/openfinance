@@ -11,7 +11,7 @@ Parameters:
     Default: 512
   Timeout:
     Type: Number
-    Default: 30
+    Default: 60
   DeploymentBucket:
     Type: String
   DeploymentKeyPrefix:
