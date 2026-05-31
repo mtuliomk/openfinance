@@ -29,7 +29,7 @@ flowchart TD
     subgraph AWS[AWS Account]
       S[CloudFormation/SAM\nServerless Application Stack]
       T[AWS Lambda Functions]
-      U[AWS::SSM::Parameter\n/openfinance/backend/*]
+      U[SSM Parameter Store\n/openfinance/backend/*\n(pre-provisionado)]
       V[CloudWatch Log Groups]
       W[IAM Role e Policies]
     end
@@ -49,6 +49,13 @@ flowchart TD
 ## Modo de Execucao (Reconciliacao Completa Obrigatoria)
 Toda execucao desta skill deve rodar em modo de reconciliacao completa, revisando todos os artefatos canonicos e garantindo consistencia fim a fim.
 
+## Regra de Qualidade para Esta Skill (Dispensa de Build e Testes de App)
+Como esta skill atua apenas em artefatos de deploy e nao altera codigo das aplicacoes (`frontend`, `backend`, `proxy`), nao e obrigatorio executar `build` e testes unitarios das aplicacoes durante a execucao desta skill.
+
+Regras:
+- aplicar a dispensa somente quando a mudanca estiver restrita a artefatos de deploy/documentacao da propria skill;
+- se houver qualquer alteracao em codigo de aplicacao, voltar a exigir a execucao normal dos gates de qualidade do repositorio.
+
 ## Regra de Execucao Assistida (Obrigatoria)
 Esta skill deve ser executada apenas pelo DEV, de forma assistida, durante fluxo manual de desenvolvimento.
 
@@ -63,7 +70,7 @@ A skill deve considerar "bootstrap necessario" quando faltar qualquer item da li
 Quando bootstrap for necessario, a skill deve obrigatoriamente:
 - descobrir lambdas dinamicamente em `backend/src/app/lambda/*-lambda.ts` durante a execucao;
 - ler chaves de ambiente na ordem `backend/.env` -> `backend/.env.example` -> lista vazia;
-- gerar `deploy/backend/backend-serverless.yml` com funcoes, IAM e parametros SSM;
+- gerar `deploy/backend/backend-serverless.yml` com funcoes, IAM e Function URL por lambda, usando apenas referencias `{{resolve:ssm:/openfinance/backend/...}}`;
 
 Em toda execucao, a skill deve obrigatoriamente:
 - revisar os artefatos canonicos de CloudFormation/SAM;
@@ -90,29 +97,57 @@ Quando os artefatos de deploy ja existirem, a skill deve obrigatoriamente:
 
 A skill nao deve assumir que artefatos existentes estao atualizados sem reconciliacao.
 
+## Regra Obrigatoria: Lambda Function URL por Funcao
+Toda lambda descoberta em `backend/src/app/lambda/*-lambda.ts` deve ter no template:
+- recurso `AWS::Lambda::Url` correspondente;
+- recurso `AWS::Lambda::Permission` com `Action: lambda:InvokeFunctionUrl` e `FunctionUrlAuthType` consistente com a URL;
+- output da URL para consumo operacional.
+
+A reconciliacao deve considerar divergencia quando existir lambda sem Function URL, sem permissao de invoke por URL ou sem output correspondente.
+
 ## Regra para Arquivo backend/.env Ausente
 Se `backend/.env` nao existir, a skill deve seguir a ordem:
 - usar `backend/.env.example` se existir;
 - caso tambem nao exista, continuar com lista vazia de variaveis e manter o deploy funcional;
 - registrar aviso explicito de que nao foi possivel carregar variaveis locais de ambiente.
 
-## Regra de Parameter Store na Primeira Criacao
-Na primeira criacao dos artefatos de deploy, a skill deve:
-- ler as chaves de variaveis na ordem: `backend/.env` -> `backend/.env.example` -> lista vazia;
-- criar um `AWS::SSM::Parameter` para cada entrada;
-- usar o prefixo de nome exatamente como `/openfinance/backend/[variable]`;
-- definir `Value: REPLACE_ME` como valor padrao inicial para todos os parametros;
-- manter o tipo `String` por padrao (ou `SecureString` quando explicitamente solicitado).
+## Regra Obrigatoria: Injecao de Variaveis SSM nas Lambdas (Opcao 1)
+Toda lambda deve receber variaveis de ambiente via `Environment.Variables` com dynamic reference do CloudFormation para SSM, no formato `{{resolve:ssm:/openfinance/backend/CHAVE}}`.
+
+Regras:
+- a skill deve mapear no template todas as chaves carregadas de `backend/.env` (ou fallback) para `Environment.Variables`;
+- nao buscar parametros em runtime no codigo da lambda quando o objetivo for apenas injetar configuracao de ambiente;
+- manter o prefixo `/openfinance/backend/` em todas as referencias;
+- considerar divergencia quando faltar variavel de ambiente mapeada para alguma chave esperada do SSM.
+
+## Regra de Parameter Store (Pre-Provisionado, Fora do Stack)
+Os parametros do SSM devem ser considerados pre-provisionados fora do CloudFormation/SAM desta stack.
+
+Regras:
+- a skill nao deve gerar recursos `AWS::SSM::Parameter` em `deploy/backend/backend-serverless.yml`;
+- o template deve somente referenciar parametros existentes via `{{resolve:ssm:/openfinance/backend/CHAVE}}`;
+- a reconciliacao deve falhar com mensagem clara quando houver chave esperada no `.env`/`.env.example` ausente no SSM;
+- a criacao/atualizacao de valores de parametros SSM deve ocorrer por processo externo a esta skill.
 
 ## Regra de Orquestracao por Makefile
-O target `deploy-backend` no `Makefile` deve executar apenas o deploy da stack usando artefatos ja gerados.
+O target `deploy-backend` no `Makefile` deve preparar os pre-requisitos de deploy e executar o deploy da stack.
 
 `make deploy-backend` nao deve executar discovery, reconciliacao de lambdas ou atualizacao de template.
 
-A atualizacao de artefatos e responsabilidade exclusiva da execucao manual da skill pelo dev.
-
 O target `deploy-backend` deve referenciar explicitamente:
 - `deploy/backend/backend-serverless.yml`
+
+Prefixo padrao obrigatorio para artefatos no bucket S3:
+- `deploy-openfinance`
+
+Contrato obrigatorio do `deploy-backend` no `Makefile`:
+- deve definir bucket padrao no proprio `Makefile` para execucao sem argumentos;
+- deve permitir override opcional do bucket via `DEPLOYMENT_BUCKET=<nome>`;
+- deve passar `DeploymentKeyPrefix=deploy-openfinance` por padrao em `--parameter-overrides`;
+- deve criar o bucket S3 caso nao exista;
+- deve gerar o zip de deploy do backend;
+- deve copiar o zip para `${DeploymentKeyPrefix}/backend.zip` no bucket informado;
+- nao deve executar discovery ou reconciliacao.
 
 Em toda reconciliacao, esta skill deve criar o target `deploy-backend` quando ausente ou atualiza-lo quando divergente do contrato acima.
 
@@ -205,7 +240,7 @@ Para evitar ambiguidade, a skill deve considerar divergencia quando houver qualq
 - existe recurso de funcao no template sem handler correspondente no backend (recurso orfao);
 - existe chave no `.env`/`.env.example` sem parametro SSM correspondente no prefixo `/openfinance/backend/`;
 - existe parametro SSM no prefixo `/openfinance/backend/` sem chave correspondente no `.env`/`.env.example`;
-- recurso SSM no template fora do prefixo `/openfinance/backend/`;
+- existe recurso `AWS::SSM::Parameter` no template desta stack;
 - diferenca de configuracao obrigatoria por funcao no template (runtime, memory, timeout, handler, role e log group).
 
 A skill deve considerar consistencia fim a fim apenas quando todos os itens abaixo forem verdadeiros:

@@ -1,0 +1,312 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Openfinance backend serverless application
+
+Parameters:
+  Runtime:
+    Type: String
+    Default: nodejs20.x
+  MemorySize:
+    Type: Number
+    Default: 512
+  Timeout:
+    Type: Number
+    Default: 60
+  DeploymentBucket:
+    Type: String
+  DeploymentKeyPrefix:
+    Type: String
+    Default: backend
+
+Globals:
+  Function:
+    Runtime: !Ref Runtime
+    MemorySize: !Ref MemorySize
+    Timeout: !Ref Timeout
+    Tracing: Active
+
+Resources:
+  BackendLambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: ReadBackendParameters
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ssm:GetParameter
+                  - ssm:GetParametersByPath
+                Resource: arn:aws:ssm:*:*:parameter/openfinance/backend/*
+
+  AccountLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: openfinance-account
+      Handler: dist/app/lambda/account-lambda.handler
+      CodeUri:
+        Bucket: !Ref DeploymentBucket
+        Key: !Sub '${DeploymentKeyPrefix}/backend.zip'
+      Role: !GetAtt BackendLambdaExecutionRole.Arn
+
+  HealthLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: openfinance-health
+      Handler: dist/app/lambda/health-lambda.handler
+      CodeUri:
+        Bucket: !Ref DeploymentBucket
+        Key: !Sub '${DeploymentKeyPrefix}/backend.zip'
+      Role: !GetAtt BackendLambdaExecutionRole.Arn
+
+  ItemsLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: openfinance-items
+      Handler: dist/app/lambda/items-lambda.handler
+      CodeUri:
+        Bucket: !Ref DeploymentBucket
+        Key: !Sub '${DeploymentKeyPrefix}/backend.zip'
+      Role: !GetAtt BackendLambdaExecutionRole.Arn
+
+  OpenfinanceReloadLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: openfinance-openfinance-reload
+      Handler: dist/app/lambda/openfinance-reload-lambda.handler
+      CodeUri:
+        Bucket: !Ref DeploymentBucket
+        Key: !Sub '${DeploymentKeyPrefix}/backend.zip'
+      Role: !GetAtt BackendLambdaExecutionRole.Arn
+
+  TransactionLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: openfinance-transaction
+      Handler: dist/app/lambda/transaction-lambda.handler
+      CodeUri:
+        Bucket: !Ref DeploymentBucket
+        Key: !Sub '${DeploymentKeyPrefix}/backend.zip'
+      Role: !GetAtt BackendLambdaExecutionRole.Arn
+
+  AccountLambdaLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/openfinance-account
+      RetentionInDays: 14
+
+  HealthLambdaLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/openfinance-health
+      RetentionInDays: 14
+
+  ItemsLambdaLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/openfinance-items
+      RetentionInDays: 14
+
+  OpenfinanceReloadLambdaLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/openfinance-openfinance-reload
+      RetentionInDays: 14
+
+  TransactionLambdaLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/openfinance-transaction
+      RetentionInDays: 14
+
+  BackendAudienceParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /openfinance/backend/BACKEND_AUDIENCE
+      Type: String
+      Value: REPLACE_ME
+      Tier: Standard
+      Description: Generated from backend/.env
+
+  GoogleClientIdParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /openfinance/backend/GOOGLE_CLIENT_ID
+      Type: String
+      Value: REPLACE_ME
+      Tier: Standard
+      Description: Generated from backend/.env
+
+  GoogleClientSecretParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /openfinance/backend/GOOGLE_CLIENT_SECRET
+      Type: String
+      Value: REPLACE_ME
+      Tier: Standard
+      Description: Generated from backend/.env
+
+  GoogleRedirectUriParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /openfinance/backend/GOOGLE_REDIRECT_URI
+      Type: String
+      Value: REPLACE_ME
+      Tier: Standard
+      Description: Generated from backend/.env
+
+  PluggyClientIdParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /openfinance/backend/PLUGGY_CLIENT_ID
+      Type: String
+      Value: REPLACE_ME
+      Tier: Standard
+      Description: Generated from backend/.env
+
+  PluggyClientSecretParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /openfinance/backend/PLUGGY_CLIENT_SECRET
+      Type: String
+      Value: REPLACE_ME
+      Tier: Standard
+      Description: Generated from backend/.env
+
+  PortParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /openfinance/backend/PORT
+      Type: String
+      Value: REPLACE_ME
+      Tier: Standard
+      Description: Generated from backend/.env
+
+  ProxySigningSecretParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /openfinance/backend/PROXY_SIGNING_SECRET
+      Type: String
+      Value: REPLACE_ME
+      Tier: Standard
+      Description: Generated from backend/.env
+
+  TursoAuthTokenParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /openfinance/backend/TURSO_AUTH_TOKEN
+      Type: String
+      Value: REPLACE_ME
+      Tier: Standard
+      Description: Generated from backend/.env
+
+  TursoDatabaseUrlParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /openfinance/backend/TURSO_DATABASE_URL
+      Type: String
+      Value: REPLACE_ME
+      Tier: Standard
+      Description: Generated from backend/.env
+
+  AccountLambdaUrl:
+    Type: AWS::Lambda::Url
+    Properties:
+      TargetFunctionArn: !GetAtt AccountLambda.Arn
+      AuthType: NONEe
+
+  AccountLambdaUrlPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunctionUrl
+      FunctionName: !Ref AccountLambda
+      Principal: "*"
+      FunctionUrlAuthType: NONE
+
+  HealthLambdaUrl:
+    Type: AWS::Lambda::Url
+    Properties:
+      TargetFunctionArn: !GetAtt HealthLambda.Arn
+      AuthType: NONE
+
+  HealthLambdaUrlPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunctionUrl
+      FunctionName: !Ref HealthLambda
+      Principal: "*"
+      FunctionUrlAuthType: NONE
+
+  ItemsLambdaUrl:
+    Type: AWS::Lambda::Url
+    Properties:
+      TargetFunctionArn: !GetAtt ItemsLambda.Arn
+      AuthType: NONE
+
+  ItemsLambdaUrlPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunctionUrl
+      FunctionName: !Ref ItemsLambda
+      Principal: "*"
+      FunctionUrlAuthType: NONE
+
+  OpenfinanceReloadLambdaUrl:
+    Type: AWS::Lambda::Url
+    Properties:
+      TargetFunctionArn: !GetAtt OpenfinanceReloadLambda.Arn
+      AuthType: NONE
+
+  OpenfinanceReloadLambdaUrlPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunctionUrl
+      FunctionName: !Ref OpenfinanceReloadLambda
+      Principal: "*"
+      FunctionUrlAuthType: NONE
+
+  TransactionLambdaUrl:
+    Type: AWS::Lambda::Url
+    Properties:
+      TargetFunctionArn: !GetAtt TransactionLambda.Arn
+      AuthType: NONE
+
+  TransactionLambdaUrlPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunctionUrl
+      FunctionName: !Ref TransactionLambda
+      Principal: "*"
+      FunctionUrlAuthType: NONE
+
+Outputs:
+  AccountLambdaArn:
+    Value: !GetAtt AccountLambda.Arn
+  HealthLambdaArn:
+    Value: !GetAtt HealthLambda.Arn
+  ItemsLambdaArn:
+    Value: !GetAtt ItemsLambda.Arn
+  OpenfinanceReloadLambdaArn:
+    Value: !GetAtt OpenfinanceReloadLambda.Arn
+  TransactionLambdaArn:
+    Value: !GetAtt TransactionLambda.Arn
+  AccountLambdaUrl:
+    Value: !GetAtt AccountLambdaUrl.FunctionUrl
+  HealthLambdaUrl:
+    Value: !GetAtt HealthLambdaUrl.FunctionUrl
+  ItemsLambdaUrl:
+    Value: !GetAtt ItemsLambdaUrl.FunctionUrl
+  OpenfinanceReloadLambdaUrl:
+    Value: !GetAtt OpenfinanceReloadLambdaUrl.FunctionUrl
+  TransactionLambdaUrl:
+    Value: !GetAtt TransactionLambdaUrl.FunctionUrl

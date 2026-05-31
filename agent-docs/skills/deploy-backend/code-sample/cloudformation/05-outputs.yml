@@ -3,3 +3,5 @@ Outputs:
     Value: !GetAtt AccountLambda.Arn
   AccountLambdaName:
     Value: !Ref AccountLambda
+  AccountLambdaUrl:
+    Value: !GetAtt AccountLambdaUrl.FunctionUrl
