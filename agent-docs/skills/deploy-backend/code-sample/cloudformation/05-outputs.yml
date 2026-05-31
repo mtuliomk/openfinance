@@ -1,0 +1,5 @@
+Outputs:
+  AccountLambdaArn:
+    Value: !GetAtt AccountLambda.Arn
+  AccountLambdaName:
+    Value: !Ref AccountLambda

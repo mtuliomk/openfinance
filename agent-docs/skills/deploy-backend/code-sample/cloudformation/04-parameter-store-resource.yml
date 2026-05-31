@@ -1,0 +1,29 @@
+Resources:
+  # Exemplo: criar um parametro por chave do backend/.env
+  # Prefixo obrigatorio: /openfinance/backend/[variable]
+  BackendApiBaseUrlParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /openfinance/backend/API_BASE_URL
+      Type: String
+      Value: replace it
+      Tier: Standard
+      Description: Generated from backend/.env
+
+  BackendPluggyClientIdParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /openfinance/backend/PLUGGY_CLIENT_ID
+      Type: String
+      Value: replace it
+      Tier: Standard
+      Description: Generated from backend/.env
+
+  BackendPluggyClientSecretParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /openfinance/backend/PLUGGY_CLIENT_SECRET
+      Type: String
+      Value: replace it
+      Tier: Standard
+      Description: Generated from backend/.env

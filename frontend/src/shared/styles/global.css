@@ -143,6 +143,20 @@ button {
   background: #1f4a7c;
 }
 
+.home-layout__reload-action {
+  margin-top: 0.75rem;
+  width: 100%;
+  border: 1px solid #4b73a5;
+  background: #1f4a7c;
+  color: #e7eef7;
+  border-radius: 0.5rem;
+  min-height: 2.625rem;
+}
+
+.home-layout__reload-action:disabled {
+  opacity: 0.7;
+}
+
 .home-layout__body {
   grid-area: body;
   padding: 1rem;
@@ -179,6 +193,51 @@ button {
   gap: 0.875rem;
 }
 
+.home-layout__reload-status {
+  background: #fff;
+  border: 1px solid #d5e2f2;
+  border-radius: 0.875rem;
+  padding: 0.875rem;
+  margin-bottom: 0.875rem;
+}
+
+.home-layout__reload-title {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #0f2743;
+}
+
+.home-layout__progress-track {
+  margin-top: 0.625rem;
+  height: 0.65rem;
+  border-radius: 999px;
+  background: #e6eef8;
+  overflow: hidden;
+}
+
+.home-layout__progress-fill {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #0a7c6c, #1f4a7c);
+  transition: width 180ms ease;
+}
+
+.home-layout__reload-message {
+  margin: 0.625rem 0 0;
+  font-size: 0.875rem;
+}
+
+.home-layout__reload-payload {
+  margin: 0.625rem 0 0;
+  padding: 0.625rem;
+  border-radius: 0.5rem;
+  background: #f4f8fd;
+  border: 1px solid #d5e2f2;
+  font-size: 0.75rem;
+  overflow-x: auto;
+}
+
 .home-layout__dashboard-number {
   margin: 0.625rem 0 0;
   font-size: 2rem;
@@ -200,6 +259,14 @@ button {
 }
 
 .accounts-feature {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  width: 100%;
+  align-items: start;
+}
+
+.accounts-feature__accounts {
   display: grid;
   grid-template-columns: 1fr;
   gap: 0.875rem;
@@ -209,6 +276,10 @@ button {
 .accounts-feature__item {
   display: grid;
   gap: 0.5rem;
+  width: 100%;
+}
+
+.accounts-feature__transactions-panel {
   width: 100%;
 }
 
@@ -261,8 +332,14 @@ button {
 }
 
 .accounts-feature__action-cell {
-  width: 3rem;
+  width: 5.5rem;
   text-align: center;
+}
+
+.accounts-feature__action-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 
 .accounts-feature__action-button {
@@ -308,6 +385,10 @@ button {
   z-index: 1000;
 }
 
+.accounts-feature__modal-backdrop--json {
+  justify-content: flex-end;
+}
+
 .accounts-feature__modal {
   width: min(100%, 28rem);
   background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
@@ -315,6 +396,25 @@ button {
   padding: 1rem;
   box-shadow: 0 10px 30px rgb(18 38 58 / 18%);
   border: 1px solid #d5e2f2;
+}
+
+.accounts-feature__modal--json {
+  width: min(100%, 44rem);
+}
+
+.accounts-feature__json-view {
+  margin: 0.75rem 0 0;
+  padding: 0.75rem;
+  max-height: 65vh;
+  overflow: auto;
+  border: 1px solid #d5e2f2;
+  border-radius: 0.625rem;
+  background: #f8fbff;
+  color: #0f2743;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .accounts-feature__modal h3 {
@@ -597,5 +697,17 @@ button {
 
   .home-layout__dashboard-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .accounts-feature {
+    align-items: stretch;
+  }
+
+  .accounts-feature__accounts {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .accounts-feature__item {
+    align-content: start;
   }
 }

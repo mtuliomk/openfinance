@@ -8,6 +8,7 @@ export const accountTable = sqliteTable('account', {
   name: text('name'),
   marketingName: text('marketing_name'),
   balance: integer('balance'),
+  initialBalance: integer('initial_balance').notNull().default(0),
   itemId: text('item_id').notNull(),
   taxNumber: text('tax_number'),
   owner: text('owner'),

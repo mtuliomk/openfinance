@@ -1,0 +1,17 @@
+Resources:
+  AccountLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: openfinance-account
+      Handler: dist/app/lambda/account-lambda.handler
+      CodeUri:
+        Bucket: !Ref DeploymentBucket
+        Key: !Sub '${DeploymentKeyPrefix}/backend.zip'
+      Environment:
+        Variables:
+          NODE_ENV: production
+      Policies:
+        - AWSLambdaBasicExecutionRole
+      Tags:
+        service: openfinance
+        component: backend

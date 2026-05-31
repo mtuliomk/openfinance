@@ -3,6 +3,11 @@ export interface ProxyRequestConfig {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 }
 
+export interface OpenFinanceReloadResult {
+  statusCode?: number;
+  body?: unknown;
+}
+
 export interface AccountSummary {
   id: string;
   name?: string | null;

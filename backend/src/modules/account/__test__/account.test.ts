@@ -18,6 +18,7 @@ const accountMock: AccountRecord = {
   name: 'Conta Corrente',
   marketingName: 'GOLD Conta Corrente',
   balance: 120950,
+  initialBalance: 950,
   itemId: 'a0922d6f-2007-4169-a181-b961500608db',
   taxNumber: '416.799.495-00',
   owner: 'John Doe',
@@ -66,21 +67,25 @@ describe('account module', () => {
   it('creates account', async () => {
     const result = await createAccount(repository, createInputMock);
     expect(result.id).toBe(accountMock.id);
+    expect(result.balance).toBe(120000);
   });
 
   it('lists account', async () => {
     const result = await listAccount(repository);
     expect(result).toHaveLength(1);
+    expect(result[0]?.balance).toBe(120000);
   });
 
   it('gets account by id', async () => {
     const result = await getAccountById(repository, accountMock.id);
     expect(result?.id).toBe(accountMock.id);
+    expect(result?.balance).toBe(120000);
   });
 
   it('updates account by id', async () => {
     const result = await updateAccountById(repository, accountMock.id, { name: 'Nova Conta' });
     expect(result?.id).toBe(accountMock.id);
+    expect(result?.balance).toBe(120000);
   });
 
   it('deletes account by id', async () => {

@@ -28,6 +28,7 @@ export interface AccountRecord {
   name: string | null;
   marketingName: string | null;
   balance: number | null;
+  initialBalance: number;
   itemId: string;
   taxNumber: string | null;
   owner: string | null;
@@ -45,6 +46,7 @@ export interface AccountCreateInput {
   name?: string | undefined;
   marketingName?: string | undefined;
   balance?: number | undefined;
+  initialBalance?: number | undefined;
   taxNumber?: string | undefined;
   owner?: string | undefined;
   currencyCode?: string | undefined;
@@ -60,6 +62,7 @@ export interface AccountUpdateInput {
   name?: string | null | undefined;
   marketingName?: string | null | undefined;
   balance?: number | null | undefined;
+  initialBalance?: number | undefined;
   taxNumber?: string | null | undefined;
   owner?: string | null | undefined;
   currencyCode?: string | null | undefined;

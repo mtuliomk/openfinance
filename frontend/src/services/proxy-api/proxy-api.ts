@@ -1,4 +1,10 @@
-import type { AccountSummary, InvestmentSummary, ProxyRequestConfig, TransactionSummary } from './proxy-api.types';
+import type {
+  AccountSummary,
+  InvestmentSummary,
+  OpenFinanceReloadResult,
+  ProxyRequestConfig,
+  TransactionSummary,
+} from './proxy-api.types';
 import { normalizePath } from './proxy-api.utils';
 
 export function buildProxyUrl(config: ProxyRequestConfig): string {
@@ -188,6 +194,27 @@ export async function listTransactions(): Promise<TransactionSummary[]> {
       },
     ];
   });
+}
+
+export async function reloadOpenFinance(): Promise<OpenFinanceReloadResult> {
+  const response = await fetch(buildProxyUrl({ path: '/openfinance/reload', method: 'POST' }), {
+    method: 'POST',
+    headers: {
+      authorization: 'Bearer frontend-session',
+    },
+  });
+
+  const payload: unknown = await response.json().catch(() => null);
+  const body = payload && typeof payload === 'object' && 'body' in payload ? (payload as { body?: unknown }).body : payload;
+
+  if (!response.ok) {
+    throw new Error(`Failed to reload openfinance (${response.status})`);
+  }
+
+  return {
+    statusCode: response.status,
+    body,
+  };
 }
 
 function mapTransactionPaymentData(paymentData: unknown): TransactionSummary['paymentData'] {

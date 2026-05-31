@@ -10,8 +10,8 @@ import type { AccountsFeatureState } from '../../components/accounts-feature/acc
 import { InvestmentsDashboard } from '../../components/investments-dashboard/investments-dashboard';
 import type { InvestmentsDashboardState } from '../../components/investments-dashboard/investments-dashboard.types';
 import { toInvestmentsDashboardData } from '../../components/investments-dashboard/investments-dashboard.utils';
-import { listAccounts, listInvestments, listTransactions } from '../../services/proxy-api/proxy-api';
-import type { TransactionSummary } from '../../services/proxy-api/proxy-api.types';
+import { listAccounts, listInvestments, listTransactions, reloadOpenFinance } from '../../services/proxy-api/proxy-api';
+import type { OpenFinanceReloadResult, TransactionSummary } from '../../services/proxy-api/proxy-api.types';
 import { clearPersistedSession, getPersistedUserProfile } from '../../state/auth-session/auth-session';
 import { getFirstName } from '../../state/auth-session/auth-session.utils';
 import { HOME_FEATURES } from './home.types';
@@ -47,6 +47,10 @@ export function Home() {
   const [transactions, setTransactions] = useState<TransactionSummary[]>([]);
   const [transactionsLoading, setTransactionsLoading] = useState(true);
   const [transactionsError, setTransactionsError] = useState(false);
+  const [reloadStatus, setReloadStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [reloadProgress, setReloadProgress] = useState(0);
+  const [reloadResult, setReloadResult] = useState<OpenFinanceReloadResult | null>(null);
+  const [reloadErrorMessage, setReloadErrorMessage] = useState<string | null>(null);
   const activeContent = featureContent[activeFeature];
   const userProfile = getPersistedUserProfile();
   const firstName = getFirstName(userProfile.displayName);
@@ -169,6 +173,30 @@ export function Home() {
     window.dispatchEvent(new PopStateEvent('popstate'));
   }
 
+  async function handleReloadOpenFinance() {
+    setReloadStatus('loading');
+    setReloadProgress(15);
+    setReloadResult(null);
+    setReloadErrorMessage(null);
+
+    const interval = window.setInterval(() => {
+      setReloadProgress((current) => (current >= 90 ? current : current + 10));
+    }, 250);
+
+    try {
+      const result = await reloadOpenFinance();
+      window.clearInterval(interval);
+      setReloadProgress(100);
+      setReloadStatus('success');
+      setReloadResult(result);
+    } catch (error) {
+      window.clearInterval(interval);
+      setReloadProgress(100);
+      setReloadStatus('error');
+      setReloadErrorMessage(error instanceof Error ? error.message : 'Falha ao atualizar open finance');
+    }
+  }
+
   return (
     <div className="home-layout">
       <aside className="home-layout__sidebar" aria-label="Menu lateral">
@@ -204,7 +232,6 @@ export function Home() {
             </button>
           ))}
         </nav>
-
         <hr className="home-layout__divider home-layout__divider--before-logout" />
         <button
           type="button"
@@ -234,6 +261,35 @@ export function Home() {
             transactionsLoading={transactionsLoading}
             transactionsError={transactionsError}
           />
+        ) : activeFeature === 'atualizar' ? (
+          <section className="home-layout__reload-status" aria-label="Status da atualização">
+            <h1>Atualizar</h1>
+            <h2>Sincronização Open Finance</h2>
+            <button
+              type="button"
+              className="home-layout__reload-action"
+              onClick={handleReloadOpenFinance}
+              disabled={reloadStatus === 'loading'}
+            >
+              {reloadStatus === 'loading' ? 'Atualizando...' : 'Atualizar agora'}
+            </button>
+            <div
+              className="home-layout__progress-track"
+              role="progressbar"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={reloadProgress}
+            >
+              <span className="home-layout__progress-fill" style={{ width: `${reloadProgress}%` }} />
+            </div>
+            <p className="home-layout__reload-message">
+              {reloadStatus === 'loading' && 'Atualizando dados...'}
+              {reloadStatus === 'success' && 'Atualização concluída com sucesso.'}
+              {reloadStatus === 'error' && `Falha na atualização: ${reloadErrorMessage ?? 'erro inesperado'}`}
+              {reloadStatus === 'idle' && 'Nenhuma atualização iniciada.'}
+            </p>
+            {reloadResult ? <pre className="home-layout__reload-payload">{JSON.stringify(reloadResult, null, 2)}</pre> : null}
+          </section>
         ) : (
           <>
             <h1>{activeContent.title}</h1>

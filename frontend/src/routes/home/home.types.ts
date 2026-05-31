@@ -1,4 +1,4 @@
-export const HOME_FEATURES = ['home', 'contas', 'investimentos', 'cartoes', 'outros'] as const;
+export const HOME_FEATURES = ['home', 'contas', 'investimentos', 'cartoes', 'atualizar', 'outros'] as const;
 
 export type HomeFeatureKey = (typeof HOME_FEATURES)[number];
 

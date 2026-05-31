@@ -8,15 +8,19 @@ import {
   toAccountsFeatureCardData,
 } from './accounts-feature.utils';
 
-const TRANSACTIONS_PAGE_SIZE = 30;
+const TRANSACTIONS_PAGE_SIZE = 10;
 
 export function AccountsFeature({ state, transactions, transactionsLoading, transactionsError, onAccountClick }: AccountsFeatureProps) {
   const [expandedAccountId, setExpandedAccountId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedTransaction, setSelectedTransaction] = useState<TransactionSummary | null>(null);
+  const [selectedTransactionJson, setSelectedTransactionJson] = useState<TransactionSummary | null>(null);
   const cards = toAccountsFeatureCardData(state.accounts);
   const selectedDescription = selectedTransaction ? getModalDescription(selectedTransaction) : null;
   const selectedDescriptionParts = selectedDescription ? toDescriptionParts(selectedDescription) : null;
+  const selectedAccountTransactions = expandedAccountId ? getTransactionsByAccountId(transactions, expandedAccountId) : [];
+  const totalPages = Math.max(1, Math.ceil(selectedAccountTransactions.length / TRANSACTIONS_PAGE_SIZE));
+  const paginatedTransactions = paginateTransactions(selectedAccountTransactions, currentPage, TRANSACTIONS_PAGE_SIZE);
 
   if (state.isLoading) {
     return <p>Carregando contas...</p>;
@@ -37,10 +41,6 @@ export function AccountsFeature({ state, transactions, transactionsLoading, tran
   }
 
   function getModalDescription(transaction: TransactionSummary): string {
-    if (transaction.operationType !== 'PIX') {
-      return transaction.description;
-    }
-
     const participant = transaction.type === 'CREDIT' ? transaction.paymentData?.payer : transaction.paymentData?.receiver;
     if (!participant) {
       return transaction.description;
@@ -76,13 +76,10 @@ export function AccountsFeature({ state, transactions, transactionsLoading, tran
 
   return (
     <section className="accounts-feature" aria-label="Contas disponíveis">
-      {cards.map((card) => {
-        const isExpanded = expandedAccountId === card.id;
-        const accountTransactions = getTransactionsByAccountId(transactions, card.id);
-        const totalPages = Math.max(1, Math.ceil(accountTransactions.length / TRANSACTIONS_PAGE_SIZE));
-        const paginatedTransactions = paginateTransactions(accountTransactions, currentPage, TRANSACTIONS_PAGE_SIZE);
-
-        return (
+      <div className="accounts-feature__accounts" aria-label="Lista de contas">
+        {cards.map((card) => {
+          const isExpanded = expandedAccountId === card.id;
+          return (
           <article key={card.id} className="accounts-feature__item">
             <button
               type="button"
@@ -94,67 +91,75 @@ export function AccountsFeature({ state, transactions, transactionsLoading, tran
               <p>{`${card.type} | ${card.number} | ${card.bank}`}</p>
               <p>{`Saldo: ${card.balanceLabel}`}</p>
             </button>
-
-            {isExpanded ? (
-              <div className="accounts-feature__transactions" aria-label="Transações da conta">
-                {transactionsLoading ? <p>Carregando transações...</p> : null}
-                {transactionsError ? <p>Não foi possível carregar transações.</p> : null}
-                {!transactionsLoading && !transactionsError && accountTransactions.length === 0 ? (
-                  <p>Nenhuma transação para esta conta.</p>
-                ) : null}
-                {!transactionsLoading && !transactionsError && accountTransactions.length > 0 ? (
-                  <table className="accounts-feature__table">
-                    <thead>
-                      <tr>
-                        <th scope="col">Data</th>
-                        <th scope="col">Descrição</th>
-                        <th scope="col">Valor</th>
-                        <th scope="col" aria-label="Ações" />
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {paginatedTransactions.map((transaction) => (
-                        <tr key={transaction.id}>
-                          <td>{new Date(transaction.date).toLocaleDateString('pt-BR')}</td>
-                          <td>{transaction.description}</td>
-                          <td>{formatTransactionAmount(transaction.amount)}</td>
-                          <td className="accounts-feature__action-cell">
-                            <button
-                              type="button"
-                              className="accounts-feature__action-button"
-                              aria-label="Ver detalhes da transação"
-                              onClick={() => setSelectedTransaction(transaction)}
-                            >
-                              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                                <path d="M10 2a8 8 0 1 0 5 14.3l5.4 5.4 1.4-1.4-5.4-5.4A8 8 0 0 0 10 2zm0 2a6 6 0 1 1 0 12 6 6 0 0 1 0-12z" />
-                              </svg>
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                ) : null}
-                {!transactionsLoading && !transactionsError && accountTransactions.length > 0 ? (
-                  <div className="accounts-feature__pagination">
-                    <button type="button" onClick={() => setCurrentPage((page) => Math.max(1, page - 1))} disabled={currentPage === 1}>
-                      Anterior
-                    </button>
-                    <span>{`Página ${currentPage} de ${totalPages}`}</span>
-                    <button
-                      type="button"
-                      onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
-                      disabled={currentPage === totalPages}
-                    >
-                      Próxima
-                    </button>
-                  </div>
-                ) : null}
-              </div>
-            ) : null}
           </article>
         );
-      })}
+        })}
+      </div>
+
+      <div className="accounts-feature__transactions-panel" aria-label="Transações da conta selecionada">
+        {!expandedAccountId ? <p>Selecione uma conta para visualizar as transações.</p> : null}
+        {expandedAccountId && transactionsLoading ? <p>Carregando transações...</p> : null}
+        {expandedAccountId && transactionsError ? <p>Não foi possível carregar transações.</p> : null}
+        {expandedAccountId && !transactionsLoading && !transactionsError && selectedAccountTransactions.length === 0 ? (
+          <p>Nenhuma transação para esta conta.</p>
+        ) : null}
+        {expandedAccountId && !transactionsLoading && !transactionsError && selectedAccountTransactions.length > 0 ? (
+          <div className="accounts-feature__transactions">
+            <table className="accounts-feature__table">
+              <thead>
+                <tr>
+                  <th scope="col">Data</th>
+                  <th scope="col">Descrição</th>
+                  <th scope="col">Valor</th>
+                  <th scope="col" aria-label="Ações" />
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedTransactions.map((transaction) => (
+                  <tr key={transaction.id}>
+                    <td>{new Date(transaction.date).toLocaleDateString('pt-BR')}</td>
+                    <td>{transaction.description}</td>
+                    <td>{formatTransactionAmount(transaction.amount)}</td>
+                    <td className="accounts-feature__action-cell">
+                      <div className="accounts-feature__action-group">
+                        <button
+                          type="button"
+                          className="accounts-feature__action-button"
+                          aria-label="Ver JSON completo da transação"
+                          onClick={() => setSelectedTransactionJson(transaction)}
+                        >
+                          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                            <path d="M8.2 7.1 4.3 12l3.9 4.9-1.6 1.2L1.7 12l4.9-6.1 1.6 1.2zm7.6 0 1.6-1.2 4.9 6.1-4.9 6.1-1.6-1.2 3.9-4.9-3.9-4.9zM9.2 20l3.4-16 2 .4-3.4 16-2-.4z" />
+                          </svg>
+                        </button>
+                      <button
+                        type="button"
+                        className="accounts-feature__action-button"
+                        aria-label="Ver detalhes da transação"
+                        onClick={() => setSelectedTransaction(transaction)}
+                      >
+                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                          <path d="M10 2a8 8 0 1 0 5 14.3l5.4 5.4 1.4-1.4-5.4-5.4A8 8 0 0 0 10 2zm0 2a6 6 0 1 1 0 12 6 6 0 0 1 0-12z" />
+                        </svg>
+                      </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div className="accounts-feature__pagination">
+              <button type="button" onClick={() => setCurrentPage((page) => Math.max(1, page - 1))} disabled={currentPage === 1}>
+                Anterior
+              </button>
+              <span>{`Página ${currentPage} de ${totalPages}`}</span>
+              <button type="button" onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))} disabled={currentPage === totalPages}>
+                Próxima
+              </button>
+            </div>
+          </div>
+        ) : null}
+      </div>
 
       {selectedTransaction ? (
         <div className="accounts-feature__modal-backdrop" role="presentation" onClick={() => setSelectedTransaction(null)}>
@@ -214,6 +219,37 @@ export function AccountsFeature({ state, transactions, transactionsLoading, tran
                 </p>
               </div>
             </div>
+          </div>
+        </div>
+      ) : null}
+
+      {selectedTransactionJson ? (
+        <div
+          className="accounts-feature__modal-backdrop accounts-feature__modal-backdrop--json"
+          role="presentation"
+          onClick={() => setSelectedTransactionJson(null)}
+        >
+          <div
+            className="accounts-feature__modal accounts-feature__modal--json"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="transaction-json-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="accounts-feature__modal-header">
+              <h3 id="transaction-json-title">JSON da transação</h3>
+              <button
+                type="button"
+                className="accounts-feature__modal-close"
+                aria-label="Fechar modal JSON"
+                onClick={() => setSelectedTransactionJson(null)}
+              >
+                X
+              </button>
+            </div>
+            <pre className="accounts-feature__json-view">
+              {JSON.stringify(selectedTransactionJson, null, 2)}
+            </pre>
           </div>
         </div>
       ) : null}

@@ -4,6 +4,9 @@ export function getHomeFeatureLabel(feature: HomeFeatureKey): string {
   if (feature === 'cartoes') {
     return 'cartões';
   }
+  if (feature === 'atualizar') {
+    return 'atualizar';
+  }
 
   return feature;
 }
@@ -29,6 +32,11 @@ export function getHomeFeatureContent(): HomeFeatureMap {
       title: 'Cartões',
       subtitle: 'Faturas e limites',
       content: 'Veja gastos, fechamento e limite disponível.',
+    },
+    atualizar: {
+      title: 'Atualizar',
+      subtitle: 'Sincronização',
+      content: 'Atualize os dados conectados no Open Finance.',
     },
     outros: {
       title: 'Outros',

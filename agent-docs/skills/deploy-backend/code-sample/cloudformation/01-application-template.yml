@@ -1,0 +1,26 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Openfinance backend serverless application (root template)
+
+Parameters:
+  Runtime:
+    Type: String
+    Default: nodejs20.x
+  MemorySize:
+    Type: Number
+    Default: 512
+  Timeout:
+    Type: Number
+    Default: 30
+  DeploymentBucket:
+    Type: String
+  DeploymentKeyPrefix:
+    Type: String
+    Default: backend
+
+Globals:
+  Function:
+    Runtime: !Ref Runtime
+    MemorySize: !Ref MemorySize
+    Timeout: !Ref Timeout
+    Tracing: Active
