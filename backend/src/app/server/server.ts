@@ -250,6 +250,7 @@ const server = createServer(async (request, response) => {
       callbackUrl.searchParams.set('success', '1');
       callbackUrl.searchParams.set('name', user.name);
       callbackUrl.searchParams.set('avatar', user.picture);
+      callbackUrl.searchParams.set('email', user.email);
       response.writeHead(302, { location: callbackUrl.toString() });
       response.end();
       return;

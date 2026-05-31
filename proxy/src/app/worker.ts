@@ -1,4 +1,8 @@
-import { buildInternalAuthHeader, validateBearerToken } from '../auth/proxy-auth';
+import {
+  buildInternalAuthHeader,
+  isAllowedLoginByBearerToken,
+  validateBearerToken
+} from '../auth/proxy-auth';
 import { forwardRequest } from '../routing/forward';
 import { resolveRoute } from '../routing/route-map.utils';
 import {
@@ -44,7 +48,12 @@ const worker: WorkerHandler = {
       return withCors(notFoundResponse(correlationId), origin);
     }
 
-    if (!isPublicRoute && !validateBearerToken(request.headers.get('authorization'))) {
+    const authorizationHeader = request.headers.get('authorization');
+    if (!isPublicRoute && !validateBearerToken(authorizationHeader)) {
+      return withCors(unauthorizedResponse(correlationId), origin);
+    }
+
+    if (!isPublicRoute && !isAllowedLoginByBearerToken(authorizationHeader)) {
       return withCors(unauthorizedResponse(correlationId), origin);
     }
 

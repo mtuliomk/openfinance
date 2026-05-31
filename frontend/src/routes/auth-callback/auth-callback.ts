@@ -7,6 +7,7 @@ export async function handleGoogleAuthCallback(search: string): Promise<AuthCall
   const callbackSuccess = params.get('success');
   const displayName = params.get('name');
   const avatarUrl = params.get('avatar');
+  const email = params.get('email');
 
   console.info('[auth-callback] params', {
     success: callbackSuccess,
@@ -15,20 +16,20 @@ export async function handleGoogleAuthCallback(search: string): Promise<AuthCall
   });
 
   if (callbackSuccess === '1') {
-    return buildCallbackResult(true, null, displayName, avatarUrl);
+    return buildCallbackResult(true, null, displayName, avatarUrl, email);
   }
 
   const code = params.get('code');
   const state = params.get('state');
 
   if (!code || !state) {
-    return buildCallbackResult(false, 'Parâmetros de autenticação ausentes.', null, null);
+    return buildCallbackResult(false, 'Parâmetros de autenticação ausentes.', null, null, null);
   }
 
   try {
     await exchangeGoogleCallback({ code, state });
-    return buildCallbackResult(true, null, null, null);
+    return buildCallbackResult(true, null, null, null, null);
   } catch {
-    return buildCallbackResult(false, 'Não foi possível autenticar com Google.', null, null);
+    return buildCallbackResult(false, 'Não foi possível autenticar com Google.', null, null, null);
   }
 }

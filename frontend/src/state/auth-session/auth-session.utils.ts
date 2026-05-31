@@ -27,8 +27,9 @@ export function toPersistedAuthSession(
   isAuthenticated: boolean,
   displayName: string | null,
   avatarUrl: string | null,
+  email: string | null,
 ): PersistedAuthSession {
-  return { isAuthenticated, displayName, avatarUrl: isValidAvatarUrl(avatarUrl) ? avatarUrl : null };
+  return { isAuthenticated, displayName, avatarUrl: isValidAvatarUrl(avatarUrl) ? avatarUrl : null, email };
 }
 
 export function getFirstName(displayName: string | null): string {

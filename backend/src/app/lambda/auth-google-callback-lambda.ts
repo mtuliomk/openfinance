@@ -68,6 +68,7 @@ export async function handler(
     callbackUrl.searchParams.set('success', '1');
     callbackUrl.searchParams.set('name', user.name);
     callbackUrl.searchParams.set('avatar', user.picture);
+    callbackUrl.searchParams.set('email', user.email);
 
     return {
       statusCode: 302,

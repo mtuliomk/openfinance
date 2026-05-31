@@ -1,6 +1,18 @@
 import { describe, expect, it, vi } from 'vitest';
 import worker from '../worker';
 
+function createBearerToken(email: string): string {
+  const header = btoa(JSON.stringify({ alg: 'none', typ: 'JWT' }))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/g, '');
+  const payload = btoa(JSON.stringify({ email }))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/g, '');
+  return `Bearer ${header}.${payload}.signature`;
+}
+
 const env = {
   PROXY_SIGNING_SECRET: 'dev-secret-123',
   PROXY_ALLOWED_ORIGINS: 'http://localhost:3000',
@@ -23,7 +35,7 @@ describe('worker', () => {
     const request = new Request('http://localhost:8787/health', {
       headers: {
         origin: 'http://malicious.local',
-        authorization: 'Bearer token'
+        authorization: createBearerToken('mtuliomk@gmail.com')
       }
     });
 
@@ -35,7 +47,7 @@ describe('worker', () => {
     const request = new Request('http://localhost:8787/rota-inexistente', {
       headers: {
         origin: 'http://localhost:3000',
-        authorization: 'Bearer token'
+        authorization: createBearerToken('mtuliomk@gmail.com')
       }
     });
 
@@ -66,7 +78,7 @@ describe('worker', () => {
     const request = new Request('http://localhost:8787/health?x=1', {
       headers: {
         origin: 'http://localhost:3000',
-        authorization: 'Bearer token'
+        authorization: createBearerToken('mtuliomk@gmail.com')
       }
     });
 
@@ -83,5 +95,17 @@ describe('worker', () => {
     expect(forwardInit?.method).toBe('GET');
 
     vi.unstubAllGlobals();
+  });
+
+  it('retorna 401 para e-mail fora da allowlist', async () => {
+    const request = new Request('http://localhost:8787/health', {
+      headers: {
+        origin: 'http://localhost:3000',
+        authorization: createBearerToken('nao-permitido@gmail.com')
+      }
+    });
+
+    const response = await worker.fetch(request, env);
+    expect(response.status).toBe(401);
   });
 });

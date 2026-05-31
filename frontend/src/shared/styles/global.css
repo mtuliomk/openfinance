@@ -776,6 +776,10 @@ button {
   white-space: nowrap;
 }
 
+.analysis-feature__installment-text {
+  font-size: 0.7rem;
+}
+
 .analysis-feature__category-monthly-table {
   width: 100%;
   min-width: 42rem;

@@ -9,6 +9,7 @@ export function buildCallbackResult(
   errorMessage: string | null,
   displayName: string | null,
   avatarUrl: string | null,
+  email: string | null,
 ): AuthCallbackResult {
-  return { success, errorMessage, displayName, avatarUrl };
+  return { success, errorMessage, displayName, avatarUrl, email };
 }

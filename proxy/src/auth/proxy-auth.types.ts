@@ -7,3 +7,8 @@ export interface ProxyAuthPayload {
   exp: number;
   scope: 'proxy:forward';
 }
+
+export const ALLOWED_LOGIN_EMAILS: readonly string[] = [
+  'mtuliomk@gmail.com',
+  'omayumirk@gmail.com'
+];

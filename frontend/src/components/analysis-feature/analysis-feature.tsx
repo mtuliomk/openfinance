@@ -230,7 +230,17 @@ export function AnalysisFeature({ accounts, transactions, transactionsLoading, t
                       <tr key={transaction.id}>
                         <td>{new Date(transaction.date).toLocaleDateString('pt-BR')}</td>
                         <td>{transaction.description}</td>
-                        <td>{formatCurrency(transaction.amount)}</td>
+                        <td>
+                          {formatCurrency(transaction.amount)}
+                          {transaction.credit_card_metadata?.installmentNumber && transaction.credit_card_metadata?.totalInstallments
+                            ? (
+                                <span className="analysis-feature__installment-text">
+                                  {' '}
+                                  ({transaction.credit_card_metadata.installmentNumber}/{transaction.credit_card_metadata.totalInstallments})
+                                </span>
+                              )
+                            : ''}
+                        </td>
                       </tr>
                     ))}
                   </tbody>

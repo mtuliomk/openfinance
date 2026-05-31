@@ -40,7 +40,7 @@ export function App() {
 
     handleGoogleAuthCallback(window.location.search).then((result) => {
       if (result.success) {
-        persistAuthenticatedSession(result.displayName, result.avatarUrl);
+        persistAuthenticatedSession(result.displayName, result.avatarUrl, result.email);
         setAuthState({ status: 'authenticated', errorMessage: null });
         window.history.replaceState({}, '', '/home');
         setCurrentPath('/home');

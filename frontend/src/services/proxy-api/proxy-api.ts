@@ -6,17 +6,53 @@ import type {
   TransactionSummary,
 } from './proxy-api.types';
 import { normalizePath } from './proxy-api.utils';
+import { clearPersistedSession } from '../../state/auth-session/auth-session';
+import { AUTH_SESSION_STORAGE_KEY } from '../../state/auth-session/auth-session.types';
 
 export function buildProxyUrl(config: ProxyRequestConfig): string {
   const baseUrl = import.meta.env.VITE_PROXY_BASE_URL ?? '';
   return `${baseUrl}${normalizePath(config.path)}`;
 }
 
+async function fetchFromProxy(input: string, init: RequestInit): Promise<Response> {
+  const response = await fetch(input, init);
+  if (response.status === 401) {
+    clearPersistedSession();
+    window.history.replaceState({}, '', '/');
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  }
+
+  return response;
+}
+
+function toBase64Url(input: string): string {
+  return btoa(input).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+}
+
+function buildFrontendBearerToken(): string {
+  const rawSession = window.localStorage.getItem(AUTH_SESSION_STORAGE_KEY);
+  if (!rawSession) {
+    return 'Bearer frontend-session';
+  }
+
+  try {
+    const parsed = JSON.parse(rawSession) as { email?: unknown };
+    if (typeof parsed.email !== 'string' || parsed.email.length === 0) {
+      return 'Bearer frontend-session';
+    }
+    const header = toBase64Url(JSON.stringify({ alg: 'none', typ: 'JWT' }));
+    const payload = toBase64Url(JSON.stringify({ email: parsed.email }));
+    return `Bearer ${header}.${payload}.signature`;
+  } catch {
+    return 'Bearer frontend-session';
+  }
+}
+
 export async function listAccounts(): Promise<AccountSummary[]> {
-  const response = await fetch(buildProxyUrl({ path: '/account', method: 'GET' }), {
+  const response = await fetchFromProxy(buildProxyUrl({ path: '/account', method: 'GET' }), {
     method: 'GET',
     headers: {
-      authorization: 'Bearer frontend-session',
+      authorization: buildFrontendBearerToken(),
     },
   });
 
@@ -90,10 +126,10 @@ function mapBankData(bankDataCamelCase: unknown, bankDataSnakeCase: unknown): { 
 }
 
 export async function listInvestments(): Promise<InvestmentSummary[]> {
-  const response = await fetch(buildProxyUrl({ path: '/investment', method: 'GET' }), {
+  const response = await fetchFromProxy(buildProxyUrl({ path: '/investment', method: 'GET' }), {
     method: 'GET',
     headers: {
-      authorization: 'Bearer frontend-session',
+      authorization: buildFrontendBearerToken(),
     },
   });
 
@@ -132,10 +168,10 @@ export async function listInvestments(): Promise<InvestmentSummary[]> {
 }
 
 export async function listTransactions(): Promise<TransactionSummary[]> {
-  const response = await fetch(buildProxyUrl({ path: '/transaction', method: 'GET' }), {
+  const response = await fetchFromProxy(buildProxyUrl({ path: '/transaction', method: 'GET' }), {
     method: 'GET',
     headers: {
-      authorization: 'Bearer frontend-session',
+      authorization: buildFrontendBearerToken(),
     },
   });
 
@@ -240,10 +276,10 @@ function mapCreditCardMetadata(
 }
 
 export async function reloadOpenFinance(): Promise<OpenFinanceReloadResult> {
-  const response = await fetch(buildProxyUrl({ path: '/openfinance/reload', method: 'POST' }), {
+  const response = await fetchFromProxy(buildProxyUrl({ path: '/openfinance/reload', method: 'POST' }), {
     method: 'POST',
     headers: {
-      authorization: 'Bearer frontend-session',
+      authorization: buildFrontendBearerToken(),
     },
   });
 

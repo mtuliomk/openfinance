@@ -3,4 +3,5 @@ export interface AuthCallbackResult {
   errorMessage: string | null;
   displayName: string | null;
   avatarUrl: string | null;
+  email: string | null;
 }
