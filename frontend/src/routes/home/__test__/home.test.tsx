@@ -88,6 +88,12 @@ describe('Home', () => {
     fireEvent.click(screen.getByRole('button', { name: 'cartões' }));
     expect(screen.getByText('Selecione um cartão para visualizar as transações.')).toBeInTheDocument();
 
+    fireEvent.click(screen.getByRole('button', { name: 'analise' }));
+    expect(screen.getByRole('heading', { name: 'Análise de Cartões' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Gasto por categoria' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Top 4 merchants' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Parcelamento por merchant' })).toBeInTheDocument();
+
     fireEvent.click(screen.getByRole('button', { name: 'atualizar' }));
     expect(screen.getByRole('heading', { name: 'Atualizar' })).toBeInTheDocument();
     expect(screen.getByText('Sincronização Open Finance')).toBeInTheDocument();

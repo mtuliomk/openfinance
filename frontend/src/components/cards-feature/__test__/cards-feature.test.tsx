@@ -48,6 +48,8 @@ describe('CardsFeature', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Abrir cartão **** 1234' }));
+    expect(screen.getByText('-R$ 123,45')).toBeInTheDocument();
+    expect(screen.getByText('(2/10)')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Ver detalhes da transação' }));
 
     expect(screen.getAllByText('FOOD')).toHaveLength(2);

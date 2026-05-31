@@ -7,6 +7,9 @@ export function getHomeFeatureLabel(feature: HomeFeatureKey): string {
   if (feature === 'atualizar') {
     return 'atualizar';
   }
+  if (feature === 'analise') {
+    return 'analise';
+  }
 
   return feature;
 }
@@ -32,6 +35,11 @@ export function getHomeFeatureContent(): HomeFeatureMap {
       title: 'Cartões',
       subtitle: 'Faturas e limites',
       content: 'Veja gastos, fechamento e limite disponível.',
+    },
+    analise: {
+      title: 'Analise',
+      subtitle: 'Insights financeiros',
+      content: 'Acompanhe uma visão analítica consolidada das suas finanças.',
     },
     atualizar: {
       title: 'Atualizar',

@@ -143,6 +143,11 @@ button {
   background: #1f4a7c;
 }
 
+.home-layout__menu-item--subitem {
+  font-size: 0.8rem;
+  padding-left: 1.5rem;
+}
+
 .home-layout__reload-action {
   margin-top: 0.75rem;
   width: 100%;
@@ -329,6 +334,10 @@ button {
 .accounts-feature__table th {
   color: #4a5f79;
   font-weight: 700;
+}
+
+.cards-feature__installments {
+  font-size: 0.7rem;
 }
 
 .accounts-feature__action-cell {
@@ -640,6 +649,166 @@ button {
   margin-top: 0.875rem;
 }
 
+.analysis-feature {
+  display: grid;
+  gap: 0.875rem;
+}
+
+.analysis-feature__header {
+  background: #fff;
+  border: 1px solid #d5e2f2;
+  border-radius: 0.875rem;
+  padding: 0.875rem;
+}
+
+.analysis-feature__filters {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.analysis-feature__filters label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  color: #4a5f79;
+}
+
+.analysis-feature__filters input {
+  min-height: 2.25rem;
+  border: 1px solid #c3d4e8;
+  border-radius: 0.5rem;
+  padding: 0.4rem 0.5rem;
+}
+
+.analysis-feature__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.875rem;
+}
+
+.analysis-feature__card {
+  background: #fff;
+  border: 1px solid #d5e2f2;
+  border-radius: 0.875rem;
+  padding: 0.875rem;
+}
+
+.analysis-feature__card ul,
+.analysis-feature__card ol {
+  margin: 0.75rem 0 0;
+  padding-left: 1rem;
+}
+
+.analysis-feature__card li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin: 0.35rem 0;
+}
+
+.analysis-feature__card table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+}
+
+.analysis-feature__card th,
+.analysis-feature__card td {
+  text-align: left;
+  padding: 0.45rem;
+  border-bottom: 1px solid #d5e2f2;
+}
+
+.analysis-feature__value-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.analysis-feature__icon-button {
+  border: 1px solid #c3d4e8;
+  background: #fff;
+  border-radius: 999px;
+  width: 1.6rem;
+  height: 1.6rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.analysis-feature__transactions-modal {
+  height: 80vh;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.analysis-feature__transactions-scroll {
+  overflow-y: auto;
+  margin-top: 0.5rem;
+}
+
+.analysis-feature__transactions-scroll .accounts-feature__table {
+  table-layout: fixed;
+}
+
+.analysis-feature__transactions-scroll .accounts-feature__table th:nth-child(1),
+.analysis-feature__transactions-scroll .accounts-feature__table td:nth-child(1) {
+  width: 22%;
+}
+
+.analysis-feature__transactions-scroll .accounts-feature__table th:nth-child(2),
+.analysis-feature__transactions-scroll .accounts-feature__table td:nth-child(2) {
+  width: 48%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.analysis-feature__transactions-scroll .accounts-feature__table th:nth-child(3),
+.analysis-feature__transactions-scroll .accounts-feature__table td:nth-child(3) {
+  width: 30%;
+  white-space: nowrap;
+}
+
+.analysis-feature__category-monthly-table {
+  width: 100%;
+  min-width: 42rem;
+  border-collapse: collapse;
+  margin-top: 0.75rem;
+  font-size: 0.8rem;
+}
+
+.analysis-feature__category-monthly-scroll {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.analysis-feature__category-monthly-table th,
+.analysis-feature__category-monthly-table td {
+  text-align: left;
+  padding: 0.45rem;
+  border-bottom: 1px solid #d5e2f2;
+  white-space: nowrap;
+}
+
+.analysis-feature__category-monthly-table th:first-child,
+.analysis-feature__category-monthly-table td:first-child {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  min-width: 11rem;
+  position: sticky;
+  left: 0;
+  background: #fff;
+}
+
 @media (min-width: 768px) {
   .home-hero {
     padding: 1rem;
@@ -673,6 +842,10 @@ button {
 
   .accounts-feature {
     grid-template-columns: 1fr;
+  }
+
+  .analysis-feature__filters {
+    grid-template-columns: 1fr 1fr;
   }
 }
 

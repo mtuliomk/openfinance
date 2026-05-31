@@ -12,6 +12,7 @@ import type { CardsFeatureState } from '../../components/cards-feature/cards-fea
 import { InvestmentsDashboard } from '../../components/investments-dashboard/investments-dashboard';
 import type { InvestmentsDashboardState } from '../../components/investments-dashboard/investments-dashboard.types';
 import { toInvestmentsDashboardData } from '../../components/investments-dashboard/investments-dashboard.utils';
+import { AnalysisFeature } from '../../components/analysis-feature/analysis-feature';
 import { listAccounts, listInvestments, listTransactions, reloadOpenFinance } from '../../services/proxy-api/proxy-api';
 import type { OpenFinanceReloadResult, TransactionSummary } from '../../services/proxy-api/proxy-api.types';
 import { clearPersistedSession, getPersistedUserProfile } from '../../state/auth-session/auth-session';
@@ -241,7 +242,7 @@ export function Home() {
             <button
               key={feature}
               type="button"
-              className="home-layout__menu-item"
+              className={`home-layout__menu-item${feature === 'analise' ? ' home-layout__menu-item--subitem' : ''}`}
               data-active={feature === activeFeature}
               onClick={() => setActiveFeature(feature)}
             >
@@ -281,6 +282,13 @@ export function Home() {
         ) : activeFeature === 'cartoes' ? (
           <CardsFeature
             state={cardsState}
+            transactions={transactions}
+            transactionsLoading={transactionsLoading}
+            transactionsError={transactionsError}
+          />
+        ) : activeFeature === 'analise' ? (
+          <AnalysisFeature
+            accounts={cardsState.accounts}
             transactions={transactions}
             transactionsLoading={transactionsLoading}
             transactionsError={transactionsError}

@@ -88,7 +88,16 @@ export function CardsFeature({ state, transactions, transactionsLoading, transac
                     <td>{new Date(transaction.date).toLocaleDateString('pt-BR')}</td>
                     <td>{transaction.description}</td>
                     <td>{transaction.category ?? '-'}</td>
-                    <td>{formatTransactionAmount(transaction.amount)}</td>
+                    <td>
+                      {formatTransactionAmount(transaction.amount)}
+                      {transaction.credit_card_metadata?.installmentNumber && transaction.credit_card_metadata?.totalInstallments
+                        ? (
+                            <span className="cards-feature__installments">
+                              {` (${transaction.credit_card_metadata.installmentNumber}/${transaction.credit_card_metadata.totalInstallments})`}
+                            </span>
+                          )
+                        : ''}
+                    </td>
                     <td className="accounts-feature__action-cell">
                       <div className="accounts-feature__action-group">
                         <button
