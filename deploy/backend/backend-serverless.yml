@@ -30,6 +30,7 @@ Globals:
         GOOGLE_CLIENT_ID: '{{resolve:ssm:/openfinance/backend/GOOGLE_CLIENT_ID}}'
         GOOGLE_CLIENT_SECRET: '{{resolve:ssm:/openfinance/backend/GOOGLE_CLIENT_SECRET}}'
         GOOGLE_REDIRECT_URI: '{{resolve:ssm:/openfinance/backend/GOOGLE_REDIRECT_URI}}'
+        FRONTEND_CALLBACK_URL: '{{resolve:ssm:/openfinance/backend/FRONTEND_CALLBACK_URL}}'
         PLUGGY_CLIENT_ID: '{{resolve:ssm:/openfinance/backend/PLUGGY_CLIENT_ID}}'
         PLUGGY_CLIENT_SECRET: '{{resolve:ssm:/openfinance/backend/PLUGGY_CLIENT_SECRET}}'
         PORT: '{{resolve:ssm:/openfinance/backend/PORT}}'
@@ -181,6 +182,174 @@ Resources:
       Principal: '*'
       FunctionUrlAuthType: NONE
 
+  InvestmentLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: openfinance-investment
+      Handler: dist/app/lambda/investment-lambda.handler
+      Role: !GetAtt BackendLambdaExecutionRole.Arn
+      CodeUri:
+        Bucket: !Ref DeploymentBucket
+        Key: !Sub '${DeploymentKeyPrefix}/backend.zip'
+
+  InvestmentLambdaUrl:
+    Type: AWS::Lambda::Url
+    Properties:
+      TargetFunctionArn: !GetAtt InvestmentLambda.Arn
+      AuthType: NONE
+
+  InvestmentLambdaUrlPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunctionUrl
+      FunctionName: !Ref InvestmentLambda
+      Principal: '*'
+      FunctionUrlAuthType: NONE
+
+  ConsentLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: openfinance-consent
+      Handler: dist/app/lambda/consent-lambda.handler
+      Role: !GetAtt BackendLambdaExecutionRole.Arn
+      CodeUri:
+        Bucket: !Ref DeploymentBucket
+        Key: !Sub '${DeploymentKeyPrefix}/backend.zip'
+
+  ConsentLambdaUrl:
+    Type: AWS::Lambda::Url
+    Properties:
+      TargetFunctionArn: !GetAtt ConsentLambda.Arn
+      AuthType: NONE
+
+  ConsentLambdaUrlPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunctionUrl
+      FunctionName: !Ref ConsentLambda
+      Principal: '*'
+      FunctionUrlAuthType: NONE
+
+  IdentityLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: openfinance-identity
+      Handler: dist/app/lambda/identity-lambda.handler
+      Role: !GetAtt BackendLambdaExecutionRole.Arn
+      CodeUri:
+        Bucket: !Ref DeploymentBucket
+        Key: !Sub '${DeploymentKeyPrefix}/backend.zip'
+
+  IdentityLambdaUrl:
+    Type: AWS::Lambda::Url
+    Properties:
+      TargetFunctionArn: !GetAtt IdentityLambda.Arn
+      AuthType: NONE
+
+  IdentityLambdaUrlPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunctionUrl
+      FunctionName: !Ref IdentityLambda
+      Principal: '*'
+      FunctionUrlAuthType: NONE
+
+  LoanLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: openfinance-loan
+      Handler: dist/app/lambda/loan-lambda.handler
+      Role: !GetAtt BackendLambdaExecutionRole.Arn
+      CodeUri:
+        Bucket: !Ref DeploymentBucket
+        Key: !Sub '${DeploymentKeyPrefix}/backend.zip'
+
+  LoanLambdaUrl:
+    Type: AWS::Lambda::Url
+    Properties:
+      TargetFunctionArn: !GetAtt LoanLambda.Arn
+      AuthType: NONE
+
+  LoanLambdaUrlPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunctionUrl
+      FunctionName: !Ref LoanLambda
+      Principal: '*'
+      FunctionUrlAuthType: NONE
+
+  BillLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: openfinance-bill
+      Handler: dist/app/lambda/bill-lambda.handler
+      Role: !GetAtt BackendLambdaExecutionRole.Arn
+      CodeUri:
+        Bucket: !Ref DeploymentBucket
+        Key: !Sub '${DeploymentKeyPrefix}/backend.zip'
+
+  BillLambdaUrl:
+    Type: AWS::Lambda::Url
+    Properties:
+      TargetFunctionArn: !GetAtt BillLambda.Arn
+      AuthType: NONE
+
+  BillLambdaUrlPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunctionUrl
+      FunctionName: !Ref BillLambda
+      Principal: '*'
+      FunctionUrlAuthType: NONE
+
+  AuthGoogleStartLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: openfinance-auth-google-start
+      Handler: dist/app/lambda/auth-google-start-lambda.handler
+      Role: !GetAtt BackendLambdaExecutionRole.Arn
+      CodeUri:
+        Bucket: !Ref DeploymentBucket
+        Key: !Sub '${DeploymentKeyPrefix}/backend.zip'
+
+  AuthGoogleStartLambdaUrl:
+    Type: AWS::Lambda::Url
+    Properties:
+      TargetFunctionArn: !GetAtt AuthGoogleStartLambda.Arn
+      AuthType: NONE
+
+  AuthGoogleStartLambdaUrlPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunctionUrl
+      FunctionName: !Ref AuthGoogleStartLambda
+      Principal: '*'
+      FunctionUrlAuthType: NONE
+
+  AuthGoogleCallbackLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: openfinance-auth-google-callback
+      Handler: dist/app/lambda/auth-google-callback-lambda.handler
+      Role: !GetAtt BackendLambdaExecutionRole.Arn
+      CodeUri:
+        Bucket: !Ref DeploymentBucket
+        Key: !Sub '${DeploymentKeyPrefix}/backend.zip'
+
+  AuthGoogleCallbackLambdaUrl:
+    Type: AWS::Lambda::Url
+    Properties:
+      TargetFunctionArn: !GetAtt AuthGoogleCallbackLambda.Arn
+      AuthType: NONE
+
+  AuthGoogleCallbackLambdaUrlPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunctionUrl
+      FunctionName: !Ref AuthGoogleCallbackLambda
+      Principal: '*'
+      FunctionUrlAuthType: NONE
+
 Outputs:
   AccountLambdaUrl:
     Value: !GetAtt AccountLambdaUrl.FunctionUrl
@@ -192,3 +361,17 @@ Outputs:
     Value: !GetAtt OpenfinanceReloadLambdaUrl.FunctionUrl
   TransactionLambdaUrl:
     Value: !GetAtt TransactionLambdaUrl.FunctionUrl
+  InvestmentLambdaUrl:
+    Value: !GetAtt InvestmentLambdaUrl.FunctionUrl
+  ConsentLambdaUrl:
+    Value: !GetAtt ConsentLambdaUrl.FunctionUrl
+  IdentityLambdaUrl:
+    Value: !GetAtt IdentityLambdaUrl.FunctionUrl
+  LoanLambdaUrl:
+    Value: !GetAtt LoanLambdaUrl.FunctionUrl
+  BillLambdaUrl:
+    Value: !GetAtt BillLambdaUrl.FunctionUrl
+  AuthGoogleStartLambdaUrl:
+    Value: !GetAtt AuthGoogleStartLambdaUrl.FunctionUrl
+  AuthGoogleCallbackLambdaUrl:
+    Value: !GetAtt AuthGoogleCallbackLambdaUrl.FunctionUrl
