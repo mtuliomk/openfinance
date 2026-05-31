@@ -2,7 +2,7 @@
 
 .AWS_PROFILE := mtuliomk
 
-.PHONY: help install-frontend install-backend install-proxy install-skills start-frontend start-backend start-proxy migrate deploy-backend
+.PHONY: help install-frontend install-backend install-proxy install-skills start-frontend start-backend start-proxy migrate
 
 help:
 	@echo "Comandos make disponíveis:"
