@@ -2,7 +2,7 @@
 
 .AWS_PROFILE := mtuliomk
 
-.PHONY: help install-frontend install-backend install-proxy install-skills start-frontend start-backend start-proxy migrate
+.PHONY: help install-frontend install-backend install-proxy install-skills start-frontend start-backend start-proxy migrate deploy-proxy
 
 help:
 	@echo "Comandos make disponíveis:"
@@ -49,6 +49,9 @@ start-proxy: install-proxy
 migrate:
 	yarn --cwd backend db:generate
 	yarn --cwd backend db:migrate
+
+deploy-proxy: install-proxy
+	cd proxy && yarn wrangler deploy $(WRANGLER_FLAGS)
 
 DEPLOYMENT_BUCKET ?= openfinance-deploy-bucket
 DEPLOYMENT_KEY_PREFIX ?= deploy-openfinance
