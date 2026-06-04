@@ -81,7 +81,7 @@ export const transactionRepository: TransactionRepository = {
   },
 
   async list(): Promise<TransactionRecord[]> {
-    const records = await db.select().from(transactionTable).orderBy(desc(transactionTable.createdAt));
+    const records = await db.select().from(transactionTable).orderBy(desc(transactionTable.date));
     return records as TransactionRecord[];
   },
 

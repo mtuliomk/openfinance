@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 
 import type {
   InvestmentCreateInput,
@@ -36,7 +36,7 @@ export const investmentRepository: InvestmentRepository = {
   },
 
   async list(): Promise<InvestmentRecord[]> {
-    const records = await db.select().from(investmentTable);
+    const records = await db.select().from(investmentTable).orderBy(desc(investmentTable.purchaseDate));
     return records as InvestmentRecord[];
   },
 
