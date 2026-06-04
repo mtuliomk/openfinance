@@ -1,6 +1,10 @@
-export const HOME_FEATURES = ['home', 'contas', 'investimentos', 'cartoes', 'analise', 'atualizar', 'outros'] as const;
+export const HOME_FEATURES = ['home', 'transactions', 'contas', 'investimentos', 'cartoes', 'analise', 'atualizar', 'outros'] as const;
 
 export type HomeFeatureKey = (typeof HOME_FEATURES)[number];
+
+export interface HomeProps {
+  activeFeature?: HomeFeatureKey;
+}
 
 export interface HomeFeatureContent {
   title: string;

@@ -1,4 +1,5 @@
 import { buildProxyUrl } from '../proxy-api/proxy-api';
+import { startNetworkLoading } from '../../state/network-loading/network-loading';
 import type { GoogleAuthCallbackParams, GoogleAuthStartParams } from './auth-google.types';
 import { AUTH_GOOGLE_CALLBACK_PATH, AUTH_GOOGLE_START_PATH } from './auth-google.utils';
 
@@ -17,12 +18,18 @@ export async function exchangeGoogleCallback(params: GoogleAuthCallbackParams): 
   url.searchParams.set('code', params.code);
   url.searchParams.set('state', params.state);
 
-  const response = await fetch(url.toString(), {
-    method: 'GET',
-    credentials: 'include',
-  });
+  const stopNetworkLoading = startNetworkLoading();
 
-  if (!response.ok) {
-    throw new Error('Falha ao concluir autenticação com Google.');
+  try {
+    const response = await fetch(url.toString(), {
+      method: 'GET',
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      throw new Error('Falha ao concluir autenticação com Google.');
+    }
+  } finally {
+    stopNetworkLoading();
   }
 }

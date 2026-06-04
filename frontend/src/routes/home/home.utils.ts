@@ -21,6 +21,11 @@ export function getHomeFeatureContent(): HomeFeatureMap {
       subtitle: 'Visão geral',
       content: 'Resumo inicial da sua jornada financeira.',
     },
+    transactions: {
+      title: 'Transactions',
+      subtitle: 'Recent Activity',
+      content: 'Acompanhe lançamentos, categorias e valores recentes.',
+    },
     contas: {
       title: 'Contas',
       subtitle: 'Saldos e movimentações',

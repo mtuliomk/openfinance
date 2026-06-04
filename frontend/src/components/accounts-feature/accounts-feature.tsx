@@ -105,21 +105,39 @@ export function AccountsFeature({ state, transactions, transactionsLoading, tran
         ) : null}
         {expandedAccountId && !transactionsLoading && !transactionsError && selectedAccountTransactions.length > 0 ? (
           <div className="accounts-feature__transactions">
+            <div className="transactions-feature__section-heading">
+              <h2>Recent Activity</h2>
+              <button type="button" className="transactions-feature__filter">
+                FILTER
+                <span aria-hidden="true">=</span>
+              </button>
+            </div>
             <table className="accounts-feature__table">
               <thead>
                 <tr>
-                  <th scope="col">Data</th>
-                  <th scope="col">Descrição</th>
-                  <th scope="col">Valor</th>
-                  <th scope="col" aria-label="Ações" />
+                  <th scope="col">DATE</th>
+                  <th scope="col">DESCRIPTION</th>
+                  <th scope="col">CATEGORY</th>
+                  <th scope="col">VALUE</th>
+                  <th scope="col">ACTION</th>
                 </tr>
               </thead>
               <tbody>
                 {paginatedTransactions.map((transaction) => (
                   <tr key={transaction.id}>
                     <td>{new Date(transaction.date).toLocaleDateString('pt-BR')}</td>
-                    <td>{transaction.description}</td>
-                    <td>{formatTransactionAmount(transaction.amount)}</td>
+                    <td>
+                      <span className="transactions-feature__description">
+                        <span className="transactions-feature__row-icon" aria-hidden="true">TX</span>
+                        {transaction.description}
+                      </span>
+                    </td>
+                    <td>
+                      <span className="transactions-feature__category">{transaction.category ?? 'Uncategorized'}</span>
+                    </td>
+                    <td className="transactions-feature__value" data-type={transaction.amount > 0 ? 'credit' : transaction.amount < 0 ? 'debit' : 'neutral'}>
+                      {formatTransactionAmount(transaction.amount)}
+                    </td>
                     <td className="accounts-feature__action-cell">
                       <div className="accounts-feature__action-group">
                         <button
@@ -148,14 +166,17 @@ export function AccountsFeature({ state, transactions, transactionsLoading, tran
                 ))}
               </tbody>
             </table>
-            <div className="accounts-feature__pagination">
+            <div className="accounts-feature__pagination transactions-feature__pagination">
+              <span>{`Showing ${(currentPage - 1) * TRANSACTIONS_PAGE_SIZE + 1} to ${Math.min(selectedAccountTransactions.length, currentPage * TRANSACTIONS_PAGE_SIZE)} of ${selectedAccountTransactions.length} entries`}</span>
+              <div className="transactions-feature__pagination-actions">
               <button type="button" onClick={() => setCurrentPage((page) => Math.max(1, page - 1))} disabled={currentPage === 1}>
-                Anterior
+                &lt;
               </button>
               <span>{`Página ${currentPage} de ${totalPages}`}</span>
               <button type="button" onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))} disabled={currentPage === totalPages}>
-                Próxima
+                &gt;
               </button>
+              </div>
             </div>
           </div>
         ) : null}

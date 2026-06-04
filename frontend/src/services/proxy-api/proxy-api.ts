@@ -8,6 +8,7 @@ import type {
 import { normalizePath } from './proxy-api.utils';
 import { clearPersistedSession } from '../../state/auth-session/auth-session';
 import { AUTH_SESSION_STORAGE_KEY } from '../../state/auth-session/auth-session.types';
+import { startNetworkLoading } from '../../state/network-loading/network-loading';
 
 export function buildProxyUrl(config: ProxyRequestConfig): string {
   const baseUrl = import.meta.env.VITE_PROXY_BASE_URL ?? '';
@@ -15,14 +16,20 @@ export function buildProxyUrl(config: ProxyRequestConfig): string {
 }
 
 async function fetchFromProxy(input: string, init: RequestInit): Promise<Response> {
-  const response = await fetch(input, init);
-  if (response.status === 401) {
-    clearPersistedSession();
-    window.history.replaceState({}, '', '/');
-    window.dispatchEvent(new PopStateEvent('popstate'));
-  }
+  const stopNetworkLoading = startNetworkLoading();
 
-  return response;
+  try {
+    const response = await fetch(input, init);
+    if (response.status === 401) {
+      clearPersistedSession();
+      window.history.replaceState({}, '', '/');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    }
+
+    return response;
+  } finally {
+    stopNetworkLoading();
+  }
 }
 
 function toBase64Url(input: string): string {

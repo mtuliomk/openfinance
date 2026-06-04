@@ -13,19 +13,15 @@ import { InvestmentsDashboard } from '../../components/investments-dashboard/inv
 import type { InvestmentsDashboardState } from '../../components/investments-dashboard/investments-dashboard.types';
 import { toInvestmentsDashboardData } from '../../components/investments-dashboard/investments-dashboard.utils';
 import { AnalysisFeature } from '../../components/analysis-feature/analysis-feature';
+import { TransactionsFeature } from '../../components/transactions-feature/transactions-feature';
 import { listAccounts, listInvestments, listTransactions, reloadOpenFinance } from '../../services/proxy-api/proxy-api';
 import type { OpenFinanceReloadResult, TransactionSummary } from '../../services/proxy-api/proxy-api.types';
-import { clearPersistedSession, getPersistedUserProfile } from '../../state/auth-session/auth-session';
-import { getFirstName } from '../../state/auth-session/auth-session.utils';
-import { HOME_FEATURES } from './home.types';
-import type { HomeFeatureKey } from './home.types';
-import { getCopyrightText, getHomeFeatureContent, getHomeFeatureLabel } from './home.utils';
+import type { HomeProps } from './home.types';
+import { getCopyrightText, getHomeFeatureContent } from './home.utils';
 
 declare const __APP_VERSION__: string;
 
-export function Home() {
-  const [activeFeature, setActiveFeature] = useState<HomeFeatureKey>('home');
-  const [avatarLoadFailed, setAvatarLoadFailed] = useState(false);
+export function Home({ activeFeature = 'home' }: HomeProps) {
   const featureContent = useMemo(() => getHomeFeatureContent(), []);
   const [dashboardState, setDashboardState] = useState<ConnectedAccountsDashboardState>({
     data: toConnectedAccountsDashboardData([]),
@@ -60,9 +56,6 @@ export function Home() {
   const [reloadResult, setReloadResult] = useState<OpenFinanceReloadResult | null>(null);
   const [reloadErrorMessage, setReloadErrorMessage] = useState<string | null>(null);
   const activeContent = featureContent[activeFeature];
-  const userProfile = getPersistedUserProfile();
-  const firstName = getFirstName(userProfile.displayName);
-  const showAvatarImage = Boolean(userProfile.avatarUrl) && !avatarLoadFailed;
 
   useEffect(() => {
     let isMounted = true;
@@ -185,12 +178,6 @@ export function Home() {
     };
   }, []);
 
-  function handleLogout() {
-    clearPersistedSession();
-    window.history.replaceState({}, '', '/');
-    window.dispatchEvent(new PopStateEvent('popstate'));
-  }
-
   async function handleReloadOpenFinance() {
     setReloadStatus('loading');
     setReloadProgress(15);
@@ -216,62 +203,21 @@ export function Home() {
   }
 
   return (
-    <div className="home-layout">
-      <aside className="home-layout__sidebar" aria-label="Menu lateral">
-        <div className="home-layout__brand">Open Finance 1.0</div>
-
-        <div className="home-layout__user-wrap">
-          {showAvatarImage ? (
-            <img
-              className="home-layout__avatar"
-              src={userProfile.avatarUrl ?? undefined}
-              alt={`Avatar de ${firstName}`}
-              onError={() => setAvatarLoadFailed(true)}
-            />
-          ) : (
-            <span className="home-layout__avatar-fallback" aria-hidden="true">
-              {firstName.charAt(0).toUpperCase()}
-            </span>
-          )}
-          <p className="home-layout__user">{firstName}</p>
-        </div>
-        <hr className="home-layout__divider" />
-
-        <nav aria-label="Funcionalidades" className="home-layout__nav">
-          {HOME_FEATURES.map((feature) => (
-            <button
-              key={feature}
-              type="button"
-              className={`home-layout__menu-item${feature === 'analise' ? ' home-layout__menu-item--subitem' : ''}`}
-              data-active={feature === activeFeature}
-              onClick={() => setActiveFeature(feature)}
-            >
-              {getHomeFeatureLabel(feature)}
-            </button>
-          ))}
-        </nav>
-        <hr className="home-layout__divider home-layout__divider--before-logout" />
-        <button
-          type="button"
-          className="home-layout__logout"
-          onClick={handleLogout}
-          aria-label="Logout"
-          title="Logout"
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <path d="M14 17l-1.4-1.4 2.6-2.6H4v-2h11.2l-2.6-2.6L14 7l5 5-5 5z" />
-            <path d="M5 3h10a2 2 0 0 1 2 2v3h-2V5H5v14h10v-3h2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" />
-          </svg>
-        </button>
-      </aside>
-
-      <main className="home-layout__body" aria-live="polite">
+    <div className="home-page">
+      <section className="home-page__body" aria-live="polite">
         {activeFeature === 'home' ? (
-          <section className="home-layout__dashboard-grid" aria-label="Dashboards da home">
+          <section className="home-page__dashboard-grid" aria-label="Dashboards da home">
             <ConnectedAccountsDashboard state={dashboardState} />
             <InvestmentsDashboard state={investmentsDashboardState} />
             <CardsDashboard state={cardsDashboardState} />
           </section>
+        ) : activeFeature === 'transactions' ? (
+          <TransactionsFeature
+            accounts={cardsState.accounts}
+            transactions={transactions}
+            isLoading={transactionsLoading}
+            hasError={transactionsError}
+          />
         ) : activeFeature === 'contas' ? (
           <AccountsFeature
             state={accountsState}
@@ -294,44 +240,42 @@ export function Home() {
             transactionsError={transactionsError}
           />
         ) : activeFeature === 'atualizar' ? (
-          <section className="home-layout__reload-status" aria-label="Status da atualização">
-            <h1>Atualizar</h1>
+          <section className="home-page__reload-status" aria-label="Status da atualização">
             <h2>Sincronização Open Finance</h2>
             <button
               type="button"
-              className="home-layout__reload-action"
+              className="home-page__reload-action"
               onClick={handleReloadOpenFinance}
               disabled={reloadStatus === 'loading'}
             >
               {reloadStatus === 'loading' ? 'Atualizando...' : 'Atualizar agora'}
             </button>
             <div
-              className="home-layout__progress-track"
+              className="home-page__progress-track"
               role="progressbar"
               aria-valuemin={0}
               aria-valuemax={100}
               aria-valuenow={reloadProgress}
             >
-              <span className="home-layout__progress-fill" style={{ width: `${reloadProgress}%` }} />
+              <span className="home-page__progress-fill" style={{ width: `${reloadProgress}%` }} />
             </div>
-            <p className="home-layout__reload-message">
+            <p className="home-page__reload-message">
               {reloadStatus === 'loading' && 'Atualizando dados...'}
               {reloadStatus === 'success' && 'Atualização concluída com sucesso.'}
               {reloadStatus === 'error' && `Falha na atualização: ${reloadErrorMessage ?? 'erro inesperado'}`}
               {reloadStatus === 'idle' && 'Nenhuma atualização iniciada.'}
             </p>
-            {reloadResult ? <pre className="home-layout__reload-payload">{JSON.stringify(reloadResult, null, 2)}</pre> : null}
+            {reloadResult ? <pre className="home-page__reload-payload">{JSON.stringify(reloadResult, null, 2)}</pre> : null}
           </section>
         ) : (
           <>
-            <h1>{activeContent.title}</h1>
             <h2>{activeContent.subtitle}</h2>
             <p>{activeContent.content}</p>
           </>
         )}
-      </main>
+      </section>
 
-      <footer className="home-layout__footer">
+      <footer className="home-page__footer">
         <p>{copyrightText()}</p>
         <p>v{__APP_VERSION__}</p>
       </footer>
