@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 
 import type { BillCreateInput, BillRecord, BillRepository, BillUpdateInput } from '../../../../modules/bill/bill.types.js';
 import { db } from '../drizzle-db.js';
@@ -17,7 +17,7 @@ export const billRepository: BillRepository = {
   },
 
   async list(): Promise<BillRecord[]> {
-    return db.select().from(billTable);
+    return db.select().from(billTable).orderBy(desc(billTable.createdAt));
   },
 
   async getById(id: string): Promise<BillRecord | null> {

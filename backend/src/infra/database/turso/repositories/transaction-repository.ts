@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 
 import type {
   TransactionCreateInput,
@@ -81,7 +81,7 @@ export const transactionRepository: TransactionRepository = {
   },
 
   async list(): Promise<TransactionRecord[]> {
-    const records = await db.select().from(transactionTable);
+    const records = await db.select().from(transactionTable).orderBy(desc(transactionTable.createdAt));
     return records as TransactionRecord[];
   },
 

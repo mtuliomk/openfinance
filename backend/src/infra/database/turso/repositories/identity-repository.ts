@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 
 import type {
   IdentityCreateInput,
@@ -22,7 +22,7 @@ export const identityRepository: IdentityRepository = {
   },
 
   async list(): Promise<IdentityRecord[]> {
-    return db.select().from(identityTable);
+    return db.select().from(identityTable).orderBy(desc(identityTable.createdAt));
   },
 
   async getById(id: string): Promise<IdentityRecord | null> {

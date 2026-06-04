@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 
 import type {
   ItemRecord,
@@ -10,7 +10,7 @@ import { itemsTable } from '../schema/items.js';
 
 export const itemsRepository: ItemsRepository = {
   async list(): Promise<ItemRecord[]> {
-    return db.select().from(itemsTable);
+    return db.select().from(itemsTable).orderBy(desc(itemsTable.createdAt));
   },
 
   async getById(id: string): Promise<ItemRecord | null> {

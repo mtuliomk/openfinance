@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 
 import type {
   ConsentCreateInput,
@@ -22,7 +22,7 @@ export const consentRepository: ConsentRepository = {
   },
 
   async list(): Promise<ConsentRecord[]> {
-    return db.select().from(consentTable);
+    return db.select().from(consentTable).orderBy(desc(consentTable.createdAt));
   },
 
   async getById(id: string): Promise<ConsentRecord | null> {
